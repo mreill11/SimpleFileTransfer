@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
  
     /* check command line arguments */
     // CHANGE <text or file name>
-    if (argc != 4) {
+    if (argc != 3) {
         fprintf(stderr,"usage: %s <hostname> <port> <text or file name>\n", argv[0]);
         exit(0);
     }
