@@ -34,8 +34,8 @@ int main(int argc, char **argv) {
  
  
     // Load buffer, 
-    
-while(!strcmp(buf, "XIT")){
+  
+while(strcmp(buf, "XIT") != 0){
     bzero(buf, BUFSIZE);
     printf("Enter Option: "); 
     scanf("%s", buf); 
