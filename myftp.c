@@ -19,6 +19,9 @@ int main(int argc, char **argv) {
     struct timeval start, end;
     int sockfd, portno, n, k, serverlen;
     char *hostname;
+    char *command;
+    //short int len; 
+    //char name[BUFSIZE]; 
     char buf[BUFSIZE];
     char key[BUFSIZE];
     int i=0;
@@ -37,10 +40,17 @@ int main(int argc, char **argv) {
   
 while(strcmp(buf, "XIT") != 0){
     bzero(buf, BUFSIZE);
+    short int len; 
+    char name[BUFSIZE]; 
     printf("Enter Option: "); 
-    scanf("%s", buf); 
-    
-   
+    scanf("%s", buf);  
+    if (strcmp(buf, "XIT") == 0){
+        exit(0); 
+    }
+    if(strcmp(buf, "LIS") != 0){
+        printf("Enter length of filename and file name: "); 
+        scanf("%d%s", len, name); 
+    }
     // Create the socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
    
@@ -65,12 +75,23 @@ while(strcmp(buf, "XIT") != 0){
         error ("ERROR connecting"); 
     }
 
+
     // Send the message to the server
     n = write (sockfd, buf, strlen(buf)); 
     if (n < 0){
         error("ERROR writing to socket"); 
     }
-    
+    if(strcmp(buf, "LIS") != 0){
+        n = write(sockfd, (char*)len, strlen((char*)len)); 
+        if ( n<0){
+            error("Error writing to socket"); 
+        }
+        n = write(sockfd, name, strlen(name)); 
+        if (n < 0){
+            error("Error writing to socket"); 
+        }
+    }
+
     // Receive the server's reply
     bzero(buf, BUFSIZE); 
     n = read(sockfd, buf, BUFSIZE); 
