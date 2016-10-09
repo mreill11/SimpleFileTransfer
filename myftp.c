@@ -31,13 +31,22 @@ int main(int argc, char **argv) {
     }
     hostname = argv[1];
     portno = atoi(argv[2]);
+ 
+ 
+    // Load buffer, check if it is a file or string
+    bzero(buf, BUFSIZE);
+    if (access(argv[3], F_OK) != -1) {
+            readFile(buf, argv[3]);
+    } else {
+        strcpy(buf, argv[3]);
+    }
    
     // Create the socket
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
    
-    if (sockfd < 0)
+    if (sockfd < 0){
         error("ERROR opening socket");
- 
+    }
     // Load DNS Entry
     server = gethostbyname(hostname);
     if (server == NULL) {
@@ -50,45 +59,25 @@ int main(int argc, char **argv) {
     serveraddr.sin_family = AF_INET;
     bcopy((char *)server->h_addr, (char *)&serveraddr.sin_addr.s_addr, server->h_length);
     serveraddr.sin_port = htons(portno);
- 
-    // Load buffer, check if it is a file or string
-    bzero(buf, BUFSIZE);
-    if (access(argv[3], F_OK) != -1) {
-            readFile(buf, argv[3]);
-    } else {
-        strcpy(buf, argv[3]);
+
+    /* connect */
+    if (connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
+        error ("ERROR connecting"); 
     }
- 
+
     // Send the message to the server
-    serverlen = sizeof(serveraddr);
-    n = sendto(sockfd, buf, strlen(buf), 0, &serveraddr, serverlen);
-    gettimeofday(&start, NULL);
-    if (n < 0)
-            error("ERROR in sendto");
-   
+    n = write (sockfd, buf, strlen(buf)); 
+    if (n < 0){
+        error("ERROR writing to socket"); 
+    }
+    
     // Receive the server's reply
-    n = recvfrom(sockfd, buf, BUFSIZE, 0, &serveraddr, &serverlen);
-    gettimeofday(&end, NULL);
-    k = recvfrom(sockfd, key, BUFSIZE, 0, &serveraddr, &serverlen);
- 
-    if (k < 0) {
-        error("ERROR in key");
-    } else if (n < 0)  {
-        error("ERROR in recvfrom");
+    bzero(buf, BUFSIZE); 
+    n = read(sockfd, buf, BUFSIZE); 
+    if (n < 0){
+        error("ERROR reading to socket"); 
     }
- 
-    long double rtt = (end.tv_sec * (int)1e6 + end.tv_usec) - (start.tv_sec * (int)1e6 + start.tv_usec);
- 
-    // decrypt the key
-    for (i = 0; i < n; i++) {
-        buf[i] = buf[i] ^ key[i%k];
-    }
- 
-    // print the servers reply
-    printf("Echo from server: %s\n", buf);
-    printf("Key: %x\n", key);
-    printf("RTT: %Lf microseconds\n", rtt);
-    return 0;
+    return 0; 
 }
  
 // Read file into buffer
