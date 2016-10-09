@@ -1,4 +1,10 @@
 // UDP Server
+// teddy brombach
+// tbrombac
+// Emily Obaditch
+// eobaditc
+// Matt Reilly
+// Mreill11
 
 #include <stdio.h>
 #include <unistd.h>
@@ -22,6 +28,7 @@ void error(char *msg) {
 
 int main(int argc, char **argv) {
 	int sockfd; // socket 
+	int sockfd2;
 	int port; // port number
 	int clientlen; // byte size of client's address
 	struct sockaddr_in serveraddr; // server's addr
@@ -39,13 +46,12 @@ int main(int argc, char **argv) {
 	int i;    // counter
 
 	// parse command line arguments
-	if (argc != 3) {
+	if (argc != 2) {
 		fprintf(stderr, "usage: %s <port> <encryption key>\n", argv[0]);
 		exit(1);
 	}
 
 	port = atoi(argv[1]);
-	strcpy(key, argv[2]);
 
 	// create the parent socket
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -66,62 +72,40 @@ int main(int argc, char **argv) {
 	if (bind(sockfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0) 
 		error("ERROR on binding");
 
+	//Listen 
+	if (listen(sockfd, 5) < 0)
+	    error("Error on binding");
+
 	// Wait for message, send response
 	clientlen = sizeof(clientaddr);
 	while (1) {
 
-		// receive a datagram from a client
-		bzero(buf, BUFSIZE);
-		n = recvfrom(sockfd, buf, BUFSIZE, 0,(struct sockaddr *) &clientaddr, &clientlen);
-
-		// attempt to get the timestamp when the message is received.
-
-		//timestructofday(&timestruct, NULL);
-		//curTime = (timestruct.tv_sec + timestruct.tv_usec);
-		//asprintf(&timestruct," Timestamp %i:%i:%.6f",hour,min,sec,m_sec);
-		//sprintf(ret_buf + strlen(ret_buf), timestruct);
-		//strftime(time,30,"%m-%d-%Y  %T.",localtime(&curTime));
-		//printf("%s%ld\n",time,timestruct.tv_usec);
-
-		//get time 
-        gettimeofday(&timestruct, NULL); 
-        curTime = timestruct.tv_sec; 
+        sockfd2 = accept( sockfd, (struct sockaddr *) &clientaddr, &clientlen);
+        if(sockfd2 < 0)
+            error("Error on accept");
         
-        //create Timestamp
-        strftime(timeBuf, 30, " Timestamp: %T.", localtime(&curTime)); 
-        sprintf(time, "%s%ld", timeBuf, timestruct.tv_usec);
+        hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
 
-        strcat(buf, time);
-        buf[BUFSIZE - 1] = '\0';
-
-		if (n < 0)
-			error("ERROR in recvfrom");
-
-		// identify client
-		hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
-		if (hostp == NULL)
+        if (hostp == NULL)
 			error("ERROR on gethostbyaddr");
 		hostaddrp = inet_ntoa(clientaddr.sin_addr);
 		if (hostaddrp == NULL)
 			error("ERROR on inet_ntoa\n");
-		printf("server received datagram from %s (%s)\n", hostp->h_name, hostaddrp);
-		printf("server received %d/%d bytes: %s\n", strlen(buf), n, buf);
 
-		// sendto: echo the input back to the client
-		// encrypt the key
-		int keyLength = strlen(key);
-		for (i = 0; i < strlen(buf); i++) {
-			buf[i] = buf[i] ^ key[i%keyLength];
-		}
-		//free(timestamp);
+		printf("Server connected with %s (%s)\n", hostp->h_name, hostaddrp);
 
-		n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *) &clientaddr, clientlen);
-		k = sendto(sockfd, key, strlen(key), 0, (struct sockaddr *) &clientaddr, clientlen);
-		if (n < 0)  {
-			error("ERROR in sendto");
-		} else if (k < 0) {
-			error("ERROR in keysendto");
-		}
+		// receive a datagram from a client
+		bzero(buf, BUFSIZE);
+		n = read(sockfd2, buf, BUFSIZE);
+
+		if(n < 0)
+		    error("Error reading from socket");
+		printf("server recieved %d bytes: %s" , n, buf);
+
+		n = write(sockfd2, buf, strlen(buf));
+		if(n<0)
+		    error("Error writing to socket");
+
+		close(sockfd2);	
 	}
 }
-Contact GitHub API Training Shop Blog About
