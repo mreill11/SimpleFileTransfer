@@ -33,13 +33,13 @@ int main(int argc, char **argv) {
     portno = atoi(argv[2]);
  
  
-    // Load buffer, check if it is a file or string
+    // Load buffer, 
+    
+while(!strcmp(buf, "XIT")){
     bzero(buf, BUFSIZE);
-    if (access(argv[3], F_OK) != -1) {
-            readFile(buf, argv[3]);
-    } else {
-        strcpy(buf, argv[3]);
-    }
+    printf("Enter Option: "); 
+    scanf("%s", buf); 
+    
    
     // Create the socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -77,6 +77,8 @@ int main(int argc, char **argv) {
     if (n < 0){
         error("ERROR reading to socket"); 
     }
+    bzero(buf, BUFSIZE); 
+}
     return 0; 
 }
  
