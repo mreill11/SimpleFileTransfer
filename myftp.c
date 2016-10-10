@@ -94,19 +94,17 @@ int main(int argc, char **argv) {
         }
 
     // Send the message to the server
-        printf("WRITE %s \n",buf);
         n = write(sockfd, buf, strlen(buf)); 
-        printf("BUF %s\n", buf);
+
         if (n < 0){
             error("ERROR writing to socket"); 
         }
 
-        printf("after n\n");
 
-    //if(XIT){
-    //    printf("The connection has been closed\n");
-    //    exit(0);
-    //}
+        if(strcmp(buf,"XIT")==0){
+            printf("The connection has been closed\n");
+            exit(0);
+        }
 
     /*if(strcmp(buf, "LIS") != 0){
         n = write(sockfd, (const char *)len, strlen((const char *)len)); 
@@ -118,7 +116,6 @@ int main(int argc, char **argv) {
             error("Error writing to socket"); 
         }
     }*/
-        printf("After strcmp lis\n");
 
     // Receive the server's reply
         bzero(buf, BUFSIZE); 
@@ -127,7 +124,6 @@ int main(int argc, char **argv) {
             error("ERROR reading to socket"); 
         }
         bzero(buf, BUFSIZE); 
-        printf("After read and bzero\n");
 
 }
     return 0; 

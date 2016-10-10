@@ -73,13 +73,13 @@ int main(int argc, char **argv) {
 		error("ERROR on binding");
 
 	//Listen 
-	if (listen(sockfd, 5) < 0)
-	    error("Error on binding");
+	while(1){
+	    if (listen(sockfd, 5) < 0)
+	        error("Error on binding");
 
 	// Wait for message, send response
-	clientlen = sizeof(clientaddr);
-	while (1) {
-
+	    clientlen = sizeof(clientaddr);
+	
         sockfd2 = accept( sockfd, (struct sockaddr *) &clientaddr, &clientlen);
         if(sockfd2 < 0)
             error("Error on accept");
@@ -94,22 +94,26 @@ int main(int argc, char **argv) {
 
 		printf("Server connected with %s (%s)\n", hostp->h_name, hostaddrp);
 
-		// receive a datagram from a client
-		bzero(buf, BUFSIZE);
-		n = read(sockfd2, buf, BUFSIZE);
+        while(1){
+		    // receive a datagram from a client
+		    bzero(buf, BUFSIZE);
+		    n = read(sockfd2, buf, BUFSIZE);
 
-        printf("\nN: %d\n",n);
-        printf("Recieved %s\n", buf);
-		if(n < 0)
-		    error("Error reading from socket");
-		printf("server recieved %d bytes: %s\n" , n, buf);
+	    	if(n < 0)
+		       error("Error reading from socket");
+		    printf("server recieved %d bytes: %s\n" , n, buf);
 
-		n = write(sockfd2, buf, strlen(buf));
-		if(n<0)
-		    error("Error writing to socket");
+		    if(strcmp(buf,"XIT") == 0){
+                close(sockfd2);
+                break;
+            }
 
-		close(sockfd2);	
-	}
+		    n = write(sockfd2, buf, strlen(buf));
+		    if(n<0)
+		        error("Error writing to socket");
+
+	    }
+    }
 }
 
 
