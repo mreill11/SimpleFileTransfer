@@ -47,20 +47,18 @@ int main(int argc, char **argv) {
  
     // Load buffer, 
   
-while(strcmp(buf, "XIT") != 0){
     bzero(buf, BUFSIZE);
     short int len; 
     char name[BUFSIZE]; 
-    printf("Enter Command: "); 
-    scanf("%s", buf);  
-    if (strcmp(buf, "XIT") == 0){
-        printf("XIT\n");
-        XIT = 1; 
-    }
-    if(strcmp(buf, "LIS") == 0){
-        printf("Enter length of filename and file name: "); 
-        scanf("%d%s", len, name); 
-    }
+    //if (strcmp(buf, "XIT") == 0){
+    //    printf("XIT\n");
+    //    XIT = 1; 
+    //}
+    //if(strcmp(buf, "LIS") == 0){
+    //    printf("Enter length of filename and file name: "); 
+    //    scanf("%hd %s", len, name); 
+    //}
+
     // Create the socket 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -81,24 +79,36 @@ while(strcmp(buf, "XIT") != 0){
     serveraddr.sin_port = htons(portno);
 
     /* connect */
-    if (connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
+    if (connect(sockfd,(struct sockaddr*) &serveraddr, sizeof(serveraddr)) < 0){
         error ("ERROR connecting"); 
     }
 
+
+    while(1){
+        printf("Enter Command: "); 
+        scanf("%s", buf);  
+
+        if(strcmp(buf, "LIS") == 0){
+            printf("Enter length of filename and the file name: ");
+            scanf("%hd %s", len, name);
+        }
+
     // Send the message to the server
-    printf("WRITE %s \n",buf);
-    n = write(sockfd, buf, strlen(buf)); 
-    printf("BUF %s\n", buf);
-    if (n < 0){
-        error("ERROR writing to socket"); 
-    }
+        printf("WRITE %s \n",buf);
+        n = write(sockfd, buf, strlen(buf)); 
+        printf("BUF %s\n", buf);
+        if (n < 0){
+            error("ERROR writing to socket"); 
+        }
+
+        printf("after n\n");
 
     //if(XIT){
     //    printf("The connection has been closed\n");
     //    exit(0);
     //}
 
-    if(strcmp(buf, "LIS") != 0){
+    /*if(strcmp(buf, "LIS") != 0){
         n = write(sockfd, (const char *)len, strlen((const char *)len)); 
         if ( n<0){
             error("Error writing to socket"); 
@@ -107,15 +117,18 @@ while(strcmp(buf, "XIT") != 0){
         if (n < 0){
             error("Error writing to socket"); 
         }
-    }
+    }*/
+        printf("After strcmp lis\n");
 
     // Receive the server's reply
-    bzero(buf, BUFSIZE); 
-    n = read(sockfd, buf, BUFSIZE); 
-    if (n < 0){
-        error("ERROR reading to socket"); 
-    }
-    bzero(buf, BUFSIZE); 
+        bzero(buf, BUFSIZE); 
+        n = read(sockfd, buf, BUFSIZE); 
+        if (n < 0){
+            error("ERROR reading to socket"); 
+        }
+        bzero(buf, BUFSIZE); 
+        printf("After read and bzero\n");
+
 }
     return 0; 
 }

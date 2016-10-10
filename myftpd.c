@@ -136,10 +136,12 @@ int main(int argc, char **argv) {
 			continue;
 		} // No else needed, server will stay in wait mode
 
-        printf("Recieved %s", buf);
+        printf("\nN: %d\n",n);
+        printf("Recieved %s\n", buf);
+
 		if(n < 0)
 		    error("Error reading from socket");
-		printf("server recieved %d bytes: %s" , n, buf);
+		printf("server recieved %d bytes: %s\n" , n, buf);
 
 
 
