@@ -98,6 +98,7 @@ int main(int argc, char **argv) {
 		bzero(buf, BUFSIZE);
 		n = read(sockfd2, buf, BUFSIZE);
 
+        printf("Recieved %s", buf);
 		if(n < 0)
 		    error("Error reading from socket");
 		printf("server recieved %d bytes: %s" , n, buf);

@@ -14,6 +14,7 @@ void readFile(char *dest, char *fname);
 void error(char *msg);
  
 int main(int argc, char **argv) {
+    int XIT = 0;
     struct sockaddr_in serveraddr;
     struct hostent *server;
     struct timeval start, end;
@@ -42,19 +43,19 @@ while(strcmp(buf, "XIT") != 0){
     bzero(buf, BUFSIZE);
     short int len; 
     char name[BUFSIZE]; 
-    printf("Enter Option: "); 
+    printf("Enter Command: "); 
     scanf("%s", buf);  
     if (strcmp(buf, "XIT") == 0){
-        printf("The session has been closed\n");
-        exit(0); 
+        printf("XIT\n");
+        XIT = 1; 
     }
-    if(strcmp(buf, "LIS") != 0){
+    if(strcmp(buf, "LIS") == 0){
         printf("Enter length of filename and file name: "); 
         scanf("%d%s", len, name); 
     }
-    // Create the socket
+    // Create the socket 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-   
+
     if (sockfd < 0){
         error("ERROR opening socket");
     }
@@ -76,12 +77,19 @@ while(strcmp(buf, "XIT") != 0){
         error ("ERROR connecting"); 
     }
 
-
     // Send the message to the server
-    n = write (sockfd, buf, strlen(buf)); 
+    printf("WRITE %s \n",buf);
+    n = write(sockfd, buf, strlen(buf)); 
+    printf("BUF %s\n", buf);
     if (n < 0){
         error("ERROR writing to socket"); 
     }
+
+    //if(XIT){
+    //    printf("The connection has been closed\n");
+    //    exit(0);
+    //}
+
     if(strcmp(buf, "LIS") != 0){
         n = write(sockfd, (const char *)len, strlen((const char *)len)); 
         if ( n<0){
