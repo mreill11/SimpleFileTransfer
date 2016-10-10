@@ -27,61 +27,61 @@ void error(char *msg) {
 }
 
 int main(int argc, char **argv) {
-	int sockfd; // socket 
-	int sockfd2;
-	int port; // port number
-	int clientlen; // byte size of client's address
-	struct sockaddr_in serveraddr; // server's addr
-	struct sockaddr_in clientaddr; // client addr
-	struct hostent *hostp; // client host info
-	struct timeval timestruct;
-	time_t curTime;
-	char time[30];
-	char timeBuf[60];
-	char buf[BUFSIZE]; // message buffer
-	char key[BUFSIZE]; // decryption key
-	char *hostaddrp; // dotted decimal host addr string
-	int optval; // flag value for setsockopt
-	int n, k; // n = message size, k = key size
-	int i;    // counter
-	short len;
-	char name[BUFSIZE];
+    int sockfd; // socket 
+    int sockfd2;
+    int port; // port number
+    int clientlen; // byte size of client's address
+    struct sockaddr_in serveraddr; // server's addr
+    struct sockaddr_in clientaddr; // client addr
+    struct hostent *hostp; // client host info
+    struct timeval timestruct;
+    time_t curTime;
+    char time[30];
+    char timeBuf[60];
+    char buf[BUFSIZE]; // message buffer
+    char key[BUFSIZE]; // decryption key
+    char *hostaddrp; // dotted decimal host addr string
+    int optval; // flag value for setsockopt
+    int n, k; // n = message size, k = key size
+    int i;    // counter
+    short len;
+    char name[BUFSIZE];
 
-	// parse command line arguments
-	if (argc != 2) {
-		fprintf(stderr, "usage: %s <port> <encryption key>\n", argv[0]);
-		exit(1);
-	}
+    // parse command line arguments
+    if (argc != 2) {
+        fprintf(stderr, "usage: %s <port> <encryption key>\n", argv[0]);
+        exit(1);
+    }
 
-	port = atoi(argv[1]);
+    port = atoi(argv[1]);
 
-	// create the parent socket
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0) 
-		error("ERROR opening socket");
+    // create the parent socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) 
+        error("ERROR opening socket");
 
-	// setsockopt: rerun server faster
-	optval = 1;
-	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval, sizeof(int));
+    // setsockopt: rerun server faster
+    optval = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval, sizeof(int));
 
-	// build server internet address
-	bzero((char *) &serveraddr, sizeof(serveraddr));
-	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serveraddr.sin_port = htons((unsigned short)port);
+    // build server internet address
+    bzero((char *) &serveraddr, sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serveraddr.sin_port = htons((unsigned short)port);
 
-	// bind the parent socket and port
-	if (bind(sockfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0) 
-		error("ERROR on binding");
+    // bind the parent socket and port
+    if (bind(sockfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0) 
+        error("ERROR on binding");
 
-	//Listen 
-	while(1){
-	    if (listen(sockfd, 5) < 0)
-	        error("Error on binding");
+    //Listen 
+    while(1){
+        if (listen(sockfd, 5) < 0)
+            error("Error on binding");
 
-	// Wait for message, send response
-	    clientlen = sizeof(clientaddr);
-	
+    // Wait for message, send response
+        clientlen = sizeof(clientaddr);
+    
         sockfd2 = accept( sockfd, (struct sockaddr *) &clientaddr, &clientlen);
         if(sockfd2 < 0)
             error("Error on accept");
@@ -89,104 +89,84 @@ int main(int argc, char **argv) {
         hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
 
         if (hostp == NULL)
-			error("ERROR on gethostbyaddr");
-		hostaddrp = inet_ntoa(clientaddr.sin_addr);
-		if (hostaddrp == NULL)
-			error("ERROR on inet_ntoa\n");
+            error("ERROR on gethostbyaddr");
+        hostaddrp = inet_ntoa(clientaddr.sin_addr);
+        if (hostaddrp == NULL)
+            error("ERROR on inet_ntoa\n");
 
-		printf("Server connected with %s (%s)\n", hostp->h_name, hostaddrp);
+        printf("Server connected with %s (%s)\n", hostp->h_name, hostaddrp);
 
-<<<<<<< HEAD
-        while(1){
-		    // receive a datagram from a client
-		    bzero(buf, BUFSIZE);
-		    n = read(sockfd2, buf, BUFSIZE);
+        while(1) {
+            // receive a datagram from a client
+            bzero(buf, BUFSIZE);
+            n = read(sockfd2, buf, BUFSIZE);
 
-	    	if(n < 0)
-		       error("Error reading from socket");
-		    printf("server recieved %d bytes: %s\n" , n, buf);
+            if(n < 0)
+               error("Error reading from socket");
+            printf("server recieved %d bytes: %s\n" , n, buf);
 
-		    if(strcmp(buf,"XIT") == 0){
+            /* REQUEST HANDLING BLOCK */
+            if (strcmp(buf, "REQ") == 0) {
+            bzero(buf, BUFSIZE);
+            n = read(sockfd2, buf, BUFSIZE);    // length of filename
+            len = atoi(buf);
+            bzero(buf, BUFSIZE);
+            n = read(sockfd2, buf, BUFSIZE);    // filename
+            name = buf;
+
+            } else if (strcmp(buf, "UPL") == 0) {
+            
+            } else if (strcmp(buf, "DEL") == 0) {
+
+            } else if (strcmp(buf, "LIS") == 0) {
+                File *in;
+                if(!(in = popen("ls", "r"))){
+                    cout << "error" << endl;        // debugging use only
+                }
+                while (fgets(name, BUFSIZE, in) != NULL) {      // name is used for list
+                    // send list size, then list
+                    len = name.size();
+                    //n = write(sockfd2, )
+                }
+
+                pclose(in);                         // close pipe
+            } else if (strcmp(buf, "MKD") == 0) {
+
+            } else if (strcmp(buf, "RMD") == 0) {
+
+            } else if (strcmp(buf, "CHD") == 0) {
+                bzero(buf, BUFSIZE);
+                n = read(sockfd2, buf, BUFSIZE);    // length of directory name
+                len = atoi(buf);
+                bzero(buf, BUFSIZE);
+                n = read(sockfd2, buf, BUFSIZE);    // directory name
+                name = buf;
+
+                DIR* dir = opendir(name);
+                if (dir) {                          // directory exists
+                    // send client 1 if chd success, otherwise -1
+                    if (chdir(name) == 0) {
+                        // send client 1
+                    } else {
+                        // send client -1
+                    }
+                } else if (ENOENT == errno) {       // directory does not exist
+                    // send client -2
+                }
+            } else if (strcmp(buf, "XIT") == 0) {   // Close socket, return to waiting
                 close(sockfd2);
-                break;
-            }
-=======
-		// receive a datagram from a client
-		bzero(buf, BUFSIZE);
-		// TODO: This only reads in the request, must handle next two messages once request is determined
-		n = read(sockfd2, buf, BUFSIZE);
+                continue;
+            } // No else needed, server will stay in wait mode
+        
 
-		if (strcmp(buf, "REQ") == 0) {
-			bzero(buf, BUFSIZE);
-			n = read(sockfd2, buf, BUFSIZE); 	// length of filename
-			len = atoi(buf);
-			bzero(buf, BUFSIZE);
-			n = read(sockfd2, buf, BUFSIZE);	// filename
-			name = buf;
+            printf("\nN: %d\n",n);
+            printf("Recieved %s\n", buf);
 
-		} else if (strcmp(buf, "UPL") == 0) {
-			
-		} else if (strcmp(buf, "DEL") == 0) {
+            if(n < 0)
+                error("Error reading from socket");
+            printf("server recieved %d bytes: %s\n" , n, buf);
 
-		} else if (strcmp(buf, "LIS") == 0) {
-			File *in;
-			if(!(in = popen("ls", "r"))){
-				cout << "error" << endl; 		// debugging use only
-			}
-			while (fgets(name, BUFSIZE, in) != NULL) {		// name is used for list
-				// send list size, then list
-				len = name.size();
-				//n = write(sockfd2, )
-			}
-
-			pclose(in); 						// close pipe
-		} else if (strcmp(buf, "MKD") == 0) {
-
-		} else if (strcmp(buf, "RMD") == 0) {
-
-		} else if (strcmp(buf, "CHD") == 0) {
-			bzero(buf, BUFSIZE);
-			n = read(sockfd2, buf, BUFSIZE); 	// length of directory name
-			len = atoi(buf);
-			bzero(buf, BUFSIZE);
-			n = read(sockfd2, buf, BUFSIZE);	// directory name
-			name = buf;
-
-			DIR* dir = opendir(name);
-			if (dir) {							// directory exists
-				// send client 1 if chd success, otherwise -1
-				if (chdir(name) == 0) {
-					// send client 1
-				} else {
-					// send client -1
-				}
-			} else if (ENOENT == errno) {		// directory does not exist
-				// send client -2
-			}
-		} else if (strcmp(buf, "XIT") == 0) {	// Close socket, return to waiting
-			close(sockfd2);
-			continue;
-		} // No else needed, server will stay in wait mode
-
-        printf("\nN: %d\n",n);
-        printf("Recieved %s\n", buf);
-
-		if(n < 0)
-		    error("Error reading from socket");
-		printf("server recieved %d bytes: %s\n" , n, buf);
-
-
-
-		n = write(sockfd2, buf, strlen(buf));
-		if(n<0)
-		    error("Error writing to socket");
->>>>>>> 190259947d0d3574e3d29942c533fd4d23f79bfa
-
-		    n = write(sockfd2, buf, strlen(buf));
-		    if(n<0)
-		        error("Error writing to socket");
-
-	    }
+        }
     }
 }
 
