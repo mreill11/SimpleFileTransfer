@@ -133,6 +133,11 @@ void readFile(char *dest, char *fname) {
         fclose(fp);
     }
 }
+
+// LIS function
+int lis() {
+    
+}
  
 // error handling
 void error(char *msg) {
