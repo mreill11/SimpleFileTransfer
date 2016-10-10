@@ -19,13 +19,16 @@ int main(int argc, char **argv) {
     struct timeval start, end;
     int sockfd, portno, n, k, serverlen;
     char *hostname;
+    char *command;
+    //short int len; 
+    //char name[BUFSIZE]; 
     char buf[BUFSIZE];
     char key[BUFSIZE];
     int i=0;
  
     /* check command line arguments */
     // CHANGE <text or file name>
-    if (argc != 4) {
+    if (argc != 3) {
         fprintf(stderr,"usage: %s <hostname> <port> <text or file name>\n", argv[0]);
         exit(0);
     }
@@ -33,14 +36,21 @@ int main(int argc, char **argv) {
     portno = atoi(argv[2]);
  
  
-    // Load buffer, check if it is a file or string
+    // Load buffer, 
+  
+while(strcmp(buf, "XIT") != 0){
     bzero(buf, BUFSIZE);
-    if (access(argv[3], F_OK) != -1) {
-            readFile(buf, argv[3]);
-    } else {
-        strcpy(buf, argv[3]);
+    short int len; 
+    char name[BUFSIZE]; 
+    printf("Enter Option: "); 
+    scanf("%s", buf);  
+    if (strcmp(buf, "XIT") == 0){
+        exit(0); 
     }
-   
+    if(strcmp(buf, "LIS") != 0){
+        printf("Enter length of filename and file name: "); 
+        scanf("%d%s", len, name); 
+    }
     // Create the socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
    
@@ -65,18 +75,31 @@ int main(int argc, char **argv) {
         error ("ERROR connecting"); 
     }
 
+
     // Send the message to the server
     n = write (sockfd, buf, strlen(buf)); 
     if (n < 0){
         error("ERROR writing to socket"); 
     }
-    
+    if(strcmp(buf, "LIS") != 0){
+        n = write(sockfd, (char*)len, strlen((char*)len)); 
+        if ( n<0){
+            error("Error writing to socket"); 
+        }
+        n = write(sockfd, name, strlen(name)); 
+        if (n < 0){
+            error("Error writing to socket"); 
+        }
+    }
+
     // Receive the server's reply
     bzero(buf, BUFSIZE); 
     n = read(sockfd, buf, BUFSIZE); 
     if (n < 0){
         error("ERROR reading to socket"); 
     }
+    bzero(buf, BUFSIZE); 
+}
     return 0; 
 }
  
