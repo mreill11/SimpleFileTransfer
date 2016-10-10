@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     /* check command line arguments */
     // CHANGE <text or file name>
     if (argc != 3) {
-        fprintf(stderr,"usage: %s <hostname> <port> <text or file name>\n", argv[0]);
+        fprintf(stderr,"usage: %s <hostname> <port>\n", argv[0]);
         exit(0);
     }
     hostname = argv[1];
@@ -45,6 +45,7 @@ while(strcmp(buf, "XIT") != 0){
     printf("Enter Option: "); 
     scanf("%s", buf);  
     if (strcmp(buf, "XIT") == 0){
+        printf("The session has been closed\n");
         exit(0); 
     }
     if(strcmp(buf, "LIS") != 0){
@@ -82,7 +83,7 @@ while(strcmp(buf, "XIT") != 0){
         error("ERROR writing to socket"); 
     }
     if(strcmp(buf, "LIS") != 0){
-        n = write(sockfd, (char*)len, strlen((char*)len)); 
+        n = write(sockfd, (const char *)len, strlen((const char *)len)); 
         if ( n<0){
             error("Error writing to socket"); 
         }
