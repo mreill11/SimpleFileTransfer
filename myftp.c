@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     // Load buffer, 
   
     bzero(buf, BUFSIZE);
-    short int len; 
+    short len; 
     char name[BUFSIZE]; 
     //if (strcmp(buf, "XIT") == 0){
     //    printf("XIT\n");
@@ -88,9 +88,9 @@ int main(int argc, char **argv) {
         printf("Enter Command: "); 
         scanf("%s", buf);  
 
-        if(strcmp(buf, "LIS") == 0){
+        if(strcmp(buf, "LIS") != 0){ //if command is not LIS (strcmp returns 0 if strings are equal)
             printf("Enter length of filename and the file name: ");
-            scanf("%hd %s", len, name);
+            scanf("%hd %s", &len, name);
         }
 
         // Send the message to the server
@@ -104,19 +104,17 @@ int main(int argc, char **argv) {
         if(strcmp(buf,"XIT")==0){
             printf("The connection has been closed\n");
             exit(0);
-        }
-
-        /*if(strcmp(buf, "LIS") != 0){
-            n = write(sockfd, (const char *)len, strlen((const char *)len)); 
-            if ( n<0){
+        } else if(strcmp(buf, "LIS") != 0){
+            n = write (sockfd, (const char *)len, strlen((const char *)len)); 
+            if ( n<0) {
                 error("Error writing to socket"); 
             }
-            n = write(sockfd, name, strlen(name)); 
+            n = write (sockfd, name, strlen(name)); 
             if (n < 0){
                 error("Error writing to socket"); 
             }
-        }*/
-
+        }
+        
         // Receive the server's reply
         bzero(buf, BUFSIZE); 
         n = read(sockfd, buf, BUFSIZE); 
@@ -143,11 +141,6 @@ void readFile(char *dest, char *fname) {
     }
 }
 
-// LIS function
-int lis() {
-    
-}
- 
 // error handling
 void error(char *msg) {
     perror(msg);

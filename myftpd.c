@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
+#include <errno.h>
 #include <netdb.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -34,12 +36,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in serveraddr; // server's addr
     struct sockaddr_in clientaddr; // client addr
     struct hostent *hostp; // client host info
-    struct timeval timestruct;
-    time_t curTime;
-    char time[30];
-    char timeBuf[60];
     char buf[BUFSIZE]; // message buffer
-    char key[BUFSIZE]; // decryption key
     char *hostaddrp; // dotted decimal host addr string
     int optval; // flag value for setsockopt
     int n, k; // n = message size, k = key size
@@ -107,25 +104,31 @@ int main(int argc, char **argv) {
 
             /* REQUEST HANDLING BLOCK */
             if (strcmp(buf, "REQ") == 0) {
-            bzero(buf, BUFSIZE);
-            n = read(sockfd2, buf, BUFSIZE);    // length of filename
-            len = atoi(buf);
-            bzero(buf, BUFSIZE);
-            n = read(sockfd2, buf, BUFSIZE);    // filename
-            name = buf;
+                bzero(buf, BUFSIZE);
+                n = read(sockfd2, buf, BUFSIZE);    // length of filename
+                len = atoi(buf);
+                bzero(buf, BUFSIZE);
+                n = read(sockfd2, buf, BUFSIZE);    // filename
+                int i; 
+                for(i=0; i<strlen(buf); i++){
+                    name[i] = buf[i]; 
+            
+                    
+            }
+            //name = buf;
 
             } else if (strcmp(buf, "UPL") == 0) {
             
             } else if (strcmp(buf, "DEL") == 0) {
 
             } else if (strcmp(buf, "LIS") == 0) {
-                File *in;
+                FILE *in;
                 if(!(in = popen("ls", "r"))){
-                    cout << "error" << endl;        // debugging use only
+                    printf("error\n");        // debugging use only
                 }
                 while (fgets(name, BUFSIZE, in) != NULL) {      // name is used for list
                     // send list size, then list
-                    len = name.size();
+                    len = strlen(name); 
                     //n = write(sockfd2, )
                 }
 
@@ -140,7 +143,10 @@ int main(int argc, char **argv) {
                 len = atoi(buf);
                 bzero(buf, BUFSIZE);
                 n = read(sockfd2, buf, BUFSIZE);    // directory name
-                name = buf;
+                for(i=0; i<strlen(buf); i++){
+                name[i] = buf[i]; 
+                }
+                //name = buf;
 
                 DIR* dir = opendir(name);
                 if (dir) {                          // directory exists
