@@ -112,17 +112,13 @@ int main(int argc, char **argv) {
                 len = atoi(buf);
                 bzero(buf, BUFSIZE);
                 n = read(sockfd2, buf, BUFSIZE);    // filename
-<<<<<<< HEAD
+
                 int i; 
                 for(i=0; i<strlen(buf); i++){
                     name[i] = buf[i]; 
-            
-                    
-            }
+                }
             //name = buf;
-=======
                 //name = buf;
->>>>>>> 193a3b44aeba051e0c7dfa0414e137e12de75d27
 
             } else if (strcmp(buf, "UPL") == 0) {
             
@@ -131,20 +127,14 @@ int main(int argc, char **argv) {
             } else if (strcmp(buf, "LIS") == 0) {
                 FILE *in;
                 if(!(in = popen("ls", "r"))){
-<<<<<<< HEAD
                     printf("error\n");        // debugging use only
-=======
                     //failed
->>>>>>> 193a3b44aeba051e0c7dfa0414e137e12de75d27
                 }
 
                 while (fgets(name, BUFSIZE, in) != NULL) {      // name is used for list
                     // send list size, then list
-<<<<<<< HEAD
                     len = strlen(name); 
-=======
                     //len = name.size();
->>>>>>> 193a3b44aeba051e0c7dfa0414e137e12de75d27
                     //n = write(sockfd2, )
                 }
 
@@ -159,12 +149,9 @@ int main(int argc, char **argv) {
                 len = atoi(buf);
                 bzero(buf, BUFSIZE);
                 n = read(sockfd2, buf, BUFSIZE);    // directory name
-<<<<<<< HEAD
                 for(i=0; i<strlen(buf); i++){
                 name[i] = buf[i]; 
                 }
-=======
->>>>>>> 193a3b44aeba051e0c7dfa0414e137e12de75d27
                 //name = buf;
 
                 DIR *dir = opendir(name);
@@ -194,5 +181,3 @@ int main(int argc, char **argv) {
         }
     }
 }
-
-
