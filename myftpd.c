@@ -125,6 +125,10 @@ int main(int argc, char **argv) {
 			name = buf;
 
 		} else if (strcmp(buf, "UPL") == 0) {
+			
+		} else if (strcmp(buf, "DEL") == 0) {
+
+		} else if (strcmp(buf, "LIS") == 0) {
 			File *in;
 			if(!(in = popen("ls", "r"))){
 				cout << "error" << endl; 		// debugging use only
@@ -132,20 +136,33 @@ int main(int argc, char **argv) {
 			while (fgets(name, BUFSIZE, in) != NULL) {		// name is used for list
 				// send list size, then list
 				len = name.size();
-				n = write(sockfd2, )
+				//n = write(sockfd2, )
 			}
 
 			pclose(in); 						// close pipe
-		} else if (strcmp(buf, "DEL") == 0) {
-
-		} else if (strcmp(buf, "LIS") == 0) {
-
 		} else if (strcmp(buf, "MKD") == 0) {
 
 		} else if (strcmp(buf, "RMD") == 0) {
 
 		} else if (strcmp(buf, "CHD") == 0) {
+			bzero(buf, BUFSIZE);
+			n = read(sockfd2, buf, BUFSIZE); 	// length of directory name
+			len = atoi(buf);
+			bzero(buf, BUFSIZE);
+			n = read(sockfd2, buf, BUFSIZE);	// directory name
+			name = buf;
 
+			DIR* dir = opendir(name);
+			if (dir) {							// directory exists
+				// send client 1 if chd success, otherwise -1
+				if (chdir(name) == 0) {
+					// send client 1
+				} else {
+					// send client -1
+				}
+			} else if (ENOENT == errno) {		// directory does not exist
+				// send client -2
+			}
 		} else if (strcmp(buf, "XIT") == 0) {	// Close socket, return to waiting
 			close(sockfd2);
 			continue;
