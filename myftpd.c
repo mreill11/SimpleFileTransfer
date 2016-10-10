@@ -44,6 +44,8 @@ int main(int argc, char **argv) {
 	int optval; // flag value for setsockopt
 	int n, k; // n = message size, k = key size
 	int i;    // counter
+	short len;
+	char name[BUFSIZE];
 
 	// parse command line arguments
 	if (argc != 2) {
@@ -96,12 +98,50 @@ int main(int argc, char **argv) {
 
 		// receive a datagram from a client
 		bzero(buf, BUFSIZE);
+		// TODO: This only reads in the request, must handle next two messages once request is determined
 		n = read(sockfd2, buf, BUFSIZE);
+
+		if (strcmp(buf, "REQ") == 0) {
+			bzero(buf, BUFSIZE);
+			n = read(sockfd2, buf, BUFSIZE); 	// length of filename
+			len = atoi(buf);
+			bzero(buf, BUFSIZE);
+			n = read(sockfd2, buf, BUFSIZE);	// filename
+			name = buf;
+
+		} else if (strcmp(buf, "UPL") == 0) {
+			File *in;
+			if(!(in = popen("ls", "r"))){
+				cout << "error" << endl; 		// debugging use only
+			}
+			while (fgets(name, BUFSIZE, in) != NULL) {		// name is used for list
+				// send list size, then list
+				len = name.size();
+				n = write(sockfd2, )
+			}
+
+			pclose(in); 						// close pipe
+		} else if (strcmp(buf, "DEL") == 0) {
+
+		} else if (strcmp(buf, "LIS") == 0) {
+
+		} else if (strcmp(buf, "MKD") == 0) {
+
+		} else if (strcmp(buf, "RMD") == 0) {
+
+		} else if (strcmp(buf, "CHD") == 0) {
+
+		} else if (strcmp(buf, "XIT") == 0) {	// Close socket, return to waiting
+			close(sockfd2);
+			continue;
+		} // No else needed, server will stay in wait mode
 
         printf("Recieved %s", buf);
 		if(n < 0)
 		    error("Error reading from socket");
 		printf("server recieved %d bytes: %s" , n, buf);
+
+
 
 		n = write(sockfd2, buf, strlen(buf));
 		if(n<0)
