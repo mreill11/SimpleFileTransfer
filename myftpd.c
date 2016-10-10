@@ -98,10 +98,11 @@ int main(int argc, char **argv) {
 		bzero(buf, BUFSIZE);
 		n = read(sockfd2, buf, BUFSIZE);
 
-        printf("Recieved %s", buf);
+        printf("\nN: %d\n",n);
+        printf("Recieved %s\n", buf);
 		if(n < 0)
 		    error("Error reading from socket");
-		printf("server recieved %d bytes: %s" , n, buf);
+		printf("server recieved %d bytes: %s\n" , n, buf);
 
 		n = write(sockfd2, buf, strlen(buf));
 		if(n<0)
