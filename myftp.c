@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
             scanf("%hd %s", len, name);
         }
 
-    // Send the message to the server
+        // Send the message to the server
         n = write(sockfd, buf, strlen(buf)); 
 
         if (n < 0){
@@ -106,18 +106,18 @@ int main(int argc, char **argv) {
             exit(0);
         }
 
-    /*if(strcmp(buf, "LIS") != 0){
-        n = write(sockfd, (const char *)len, strlen((const char *)len)); 
-        if ( n<0){
-            error("Error writing to socket"); 
-        }
-        n = write(sockfd, name, strlen(name)); 
-        if (n < 0){
-            error("Error writing to socket"); 
-        }
-    }*/
+        /*if(strcmp(buf, "LIS") != 0){
+            n = write(sockfd, (const char *)len, strlen((const char *)len)); 
+            if ( n<0){
+                error("Error writing to socket"); 
+            }
+            n = write(sockfd, name, strlen(name)); 
+            if (n < 0){
+                error("Error writing to socket"); 
+            }
+        }*/
 
-    // Receive the server's reply
+        // Receive the server's reply
         bzero(buf, BUFSIZE); 
         n = read(sockfd, buf, BUFSIZE); 
         if (n < 0){
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
         }
         bzero(buf, BUFSIZE); 
 
-}
+    }
     return 0; 
 }
  
