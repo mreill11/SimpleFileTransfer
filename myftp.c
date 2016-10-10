@@ -1,3 +1,11 @@
+/* TCP SFTP Client
+ * Emily Obaditch - eobaditc
+ * Teddy Brombach - tbrombac
+ * Matt Reilly - mreill11
+ *
+ * This is our implementation of a Simple FTP Client, written in C.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

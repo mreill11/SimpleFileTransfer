@@ -1,10 +1,10 @@
-// UDP Server
-// teddy brombach
-// tbrombac
-// Emily Obaditch
-// eobaditc
-// Matt Reilly
-// Mreill11
+/* TCP SFTP Server
+ * Emily Obaditch - eobaditc
+ * Teddy Brombach - tbrombac
+ * Matt Reilly - mreill11
+ *
+ * This is our implementation of a Simple FTP Server, written in C.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
