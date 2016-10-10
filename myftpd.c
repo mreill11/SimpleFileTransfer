@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 	port = atoi(argv[1]);
 
 	// create the parent socket
-	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) 
 		error("ERROR opening socket");
 
