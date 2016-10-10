@@ -17,6 +17,9 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <dirent.h>
 
 #define BUFSIZE 4096
 
@@ -107,25 +110,26 @@ int main(int argc, char **argv) {
 
             /* REQUEST HANDLING BLOCK */
             if (strcmp(buf, "REQ") == 0) {
-            bzero(buf, BUFSIZE);
-            n = read(sockfd2, buf, BUFSIZE);    // length of filename
-            len = atoi(buf);
-            bzero(buf, BUFSIZE);
-            n = read(sockfd2, buf, BUFSIZE);    // filename
-            name = buf;
+                bzero(buf, BUFSIZE);
+                n = read(sockfd2, buf, BUFSIZE);    // length of filename
+                len = atoi(buf);
+                bzero(buf, BUFSIZE);
+                n = read(sockfd2, buf, BUFSIZE);    // filename
+                //name = buf;
 
             } else if (strcmp(buf, "UPL") == 0) {
             
             } else if (strcmp(buf, "DEL") == 0) {
 
             } else if (strcmp(buf, "LIS") == 0) {
-                File *in;
+                FILE *in;
                 if(!(in = popen("ls", "r"))){
-                    cout << "error" << endl;        // debugging use only
+                    //failed
                 }
+
                 while (fgets(name, BUFSIZE, in) != NULL) {      // name is used for list
                     // send list size, then list
-                    len = name.size();
+                    //len = name.size();
                     //n = write(sockfd2, )
                 }
 
@@ -140,9 +144,9 @@ int main(int argc, char **argv) {
                 len = atoi(buf);
                 bzero(buf, BUFSIZE);
                 n = read(sockfd2, buf, BUFSIZE);    // directory name
-                name = buf;
+                //name = buf;
 
-                DIR* dir = opendir(name);
+                DIR *dir = opendir(name);
                 if (dir) {                          // directory exists
                     // send client 1 if chd success, otherwise -1
                     if (chdir(name) == 0) {
