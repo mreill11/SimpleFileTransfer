@@ -88,29 +88,32 @@ int main(int argc, char **argv) {
     while(1){
         printf("Enter Command: "); 
         scanf("%s", buf);  
+        n = write(sockfd,buf, strlen(buf)); 
+        if(n<0)
+            error("ERROR writing to socket");
 
-        if(strcmp(buf, "LIS") != 0){ //if command is not LIS (strcmp returns 0 if strings are equal)
+        if(strcmp(buf, "LIS") != 0 && strcmp(buf,"XIT") !=0){ //if command is not LIS (strcmp returns 0 if strings are equal)
             printf("Enter length of filename and the file name: ");
-            scanf("%hd %s", &len, name);
+            scanf("%s %s", &len, name);
+            printf("IN HERE\n");
         }
+
 
         // Send the message to the server
-        n = write(sockfd, buf, strlen(buf)); 
-
-        if (n < 0){
-            error("ERROR writing to socket"); 
-        }
 
 
         if(strcmp(buf,"XIT")==0){
             printf("The connection has been closed\n");
             exit(0);
         } else if(strcmp(buf, "LIS") != 0){
-            n = write (sockfd, (const char *)len, strlen((const char *)len)); 
+            printf("STRCMP\n");
+            n = write (sockfd, (const char *)&len, sizeof(len)); 
+            printf("WRITE\n");
             if ( n<0) {
                 error("Error writing to socket"); 
             }
             n = write (sockfd, name, strlen(name)); 
+            printf("write 2 %d\n",n);
             if (n < 0){
                 error("Error writing to socket"); 
             }

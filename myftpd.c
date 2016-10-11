@@ -25,6 +25,8 @@
 
 #define BUFSIZE 4096
 
+void readFile(char *dest, char*fname);
+
 // error handling
 void error(char *msg) {
   perror(msg);
@@ -46,6 +48,7 @@ int main(int argc, char **argv) {
     int i;    // counter
     short len;
     char name[BUFSIZE];
+    char com[BUFSIZE];
 
     // parse command line arguments
     if (argc != 2) {
@@ -76,6 +79,7 @@ int main(int argc, char **argv) {
 
     //Listen 
     while(1){
+
         if (listen(sockfd, 5) < 0)
             error("Error on binding");
 
@@ -99,77 +103,95 @@ int main(int argc, char **argv) {
         while(1) {
             // receive a datagram from a client
             bzero(buf, BUFSIZE);
+            printf("Before read 1\n");
             n = read(sockfd2, buf, BUFSIZE);
+            strcpy(com,buf);
+            printf("Command = %s\n",com);
 
             if(n < 0)
                error("Error reading from socket");
             printf("server recieved %d bytes: %s\n" , n, buf);
 
             /* REQUEST HANDLING BLOCK */
-            if (strcmp(buf, "REQ") == 0) {
-                bzero(buf, BUFSIZE);
-                n = read(sockfd2, buf, BUFSIZE);    // length of filename
-                len = atoi(buf);
-                bzero(buf, BUFSIZE);
-                n = read(sockfd2, buf, BUFSIZE);    // filename
+            if(strcmp(com,"XIT") == 0){
+                close(sockfd2);
+                break;
+            }else if(strcmp(com,"LIS") == 0){
+                
+                continue;
+            }
 
-                int i; 
-                for(i=0; i<strlen(buf); i++){
-                    name[i] = buf[i]; 
-                }
-            //name = buf;
-                //name = buf;
+            bzero(buf,BUFSIZE);
+            printf("before read 2\n");
+            n = read(sockfd2, buf, BUFSIZE);
+            if(n<0)
+                error("ERROR reading to socket");
+            len = atoi(buf);
 
-            } else if (strcmp(buf, "UPL") == 0) {
+            printf("length = %s\n",buf);
+
+            bzero(buf, BUFSIZE);
+            printf("before read 3\n");
+            n = read(sockfd2,buf,BUFSIZE);
+            if(n<0)
+                error("ERROR reading to socket");
+            strcat(name,buf);
+
+            printf("name of file = %s\n",name);
+
+
+            if (strcmp(com, "REQ") == 0) {
+
+            } else if (strcmp(com, "UPL") == 0) {
             
-            } else if (strcmp(buf, "DEL") == 0) {
+            } else if (strcmp(com, "DEL") == 0) {
+                
+            } else if (strcmp(com, "MKD") == 0) {
 
-            } else if (strcmp(buf, "LIS") == 0) {
-                FILE *in;
-                if(!(in = popen("ls", "r"))){
-                    printf("error\n");        // debugging use only
-                    //failed
-                }
+            } else if (strcmp(com, "RMD") == 0) {
 
-                while (fgets(name, BUFSIZE, in) != NULL) {      // name is used for list
-                    // send list size, then list
-                    len = strlen(name); 
-                    //len = name.size();
-                    //n = write(sockfd2, )
-                }
-
-                pclose(in);                         // close pipe
-            } else if (strcmp(buf, "MKD") == 0) {
-
-            } else if (strcmp(buf, "RMD") == 0) {
-
-            } else if (strcmp(buf, "CHD") == 0) {
+            } else if (strcmp(com, "CHD") == 0) {
                 bzero(buf, BUFSIZE);
+                printf("READ\n");
+
                 n = read(sockfd2, buf, BUFSIZE);    // length of directory name
+                if(n < 0)
+                    error("Error reading from socket");
+            
+                printf("read\n");
                 len = atoi(buf);
                 bzero(buf, BUFSIZE);
+
                 n = read(sockfd2, buf, BUFSIZE);    // directory name
+                if(n < 0)
+                    error("Error reading from socket");
+            
+                printf("DONE\n");
                 for(i=0; i<strlen(buf); i++){
                 name[i] = buf[i]; 
                 }
                 //name = buf;
 
+                bzero(buf, BUFSIZE);
                 DIR *dir = opendir(name);
                 if (dir) {                          // directory exists
                     // send client 1 if chd success, otherwise -1
                     if (chdir(name) == 0) {
                         // send client 1
+                        buf[0] = '1';
                     } else {
                         // send client -1
+                        buf[0] = '-';
+                        buf[1] = '1';
                     }
                 } else if (ENOENT == errno) {       // directory does not exist
                     // send client -2
+                    buf[0] = '-';
+                    buf[1] = '2';
                 }
-            } else if (strcmp(buf, "XIT") == 0) {   // Close socket, return to waiting
-                close(sockfd2);
-                continue;
-            } // No else needed, server will stay in wait mode
+            }
         
+            n = write(sockfd2, buf, strlen(buf));
 
             printf("\nN: %d\n",n);
             printf("Recieved %s\n", buf);
@@ -179,5 +201,18 @@ int main(int argc, char **argv) {
             printf("server recieved %d bytes: %s\n" , n, buf);
 
         }
+    }
+}
+
+void readFile(char *dest, char *fname){
+    FILE *fp = fopen(fname, "r");
+    if(fp != NULL){
+        size_t new_len = fread(dest, sizeof(char), BUFSIZE, fp);
+        if(ferror(fp) != 0){
+            fputs("error reading file" , stderr);
+        } else{
+            dest[new_len++] = '\0';
+        }
+        fclose(fp);
     }
 }
