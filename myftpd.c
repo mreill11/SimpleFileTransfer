@@ -33,7 +33,7 @@ void error(char *msg) {
   exit(1);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
     int sockfd; // socket 
     int sockfd2;
     int port; // port number
@@ -51,11 +51,11 @@ int main(int argc, char **argv) {
     char com[BUFSIZE];
     char* path;
     char* filename;
-    strcat(filename, "path.txt");
+    //strcat(filename, "path.txt");
     
-    system("pwd > path.txt");
-    readFile(path, (char *)"path.txt");
-    printf("Path = %s",path);
+    //system("pwd > path.txt");
+   // readFile(path, (char *)"path.txt");
+   // printf("Path = %s",path);
 
     // parse command line arguments
     if (argc != 2) {
@@ -146,13 +146,66 @@ int main(int argc, char **argv) {
 
             printf("name of file = %s\n",name);
 
-
+            printf("%s is buf\n", buf); 
             if (strcmp(com, "REQ") == 0) {
 
             } else if (strcmp(com, "UPL") == 0) {
+                int filelen; 
+                FILE *fp; 
+                char * currBuf;  
+                int rounds; 
+                bzero(buf, BUFSIZE); 
+                printf("HERE");  
+                //SEND ACK TO CLIENT
+                strcat(buf, "ready"); 
+                printf("%s\n", buf); 
+                n = write(sockfd2, buf, BUFSIZE); 
+                if (n < 0){
+                    error("Error in reading scoket3\n"); 
+                }
+                bzero(buf, BUFSIZE); 
+                //read filesize
+                n = read(sockfd2, buf, BUFSIZE); 
+                filelen = atoi(buf); 
+                bzero(buf, BUFSIZE); 
+                rounds = (filelen + 4095) / 4096; 
+                int round_num = 0;
+                printf("HERE"); 
+                for(i=0; i<rounds; i++){
+                    //read 4096 bytes of file
+                    n = read(sockfd2, buf, BUFSIZE); 
+                    strcat(currBuf, buf); 
+                    if(n<0){
+                        error("error writing"); 
+                    } 
+                    fp=fopen(name, "a"); 
+                    fprintf(fp, currBuf); 
+                    fclose(fp); 
+                    bzero(currBuf, BUFSIZE); 
+                    bzero(buf, BUFSIZE); 
+                }               
+
             
             } else if (strcmp(com, "DEL") == 0) {
-                
+                    char * choice; 
+                printf("HERE\n"); 
+                if(access(name, F_OK) != -1){
+                    strcat(buf, "1"); 
+                    n = write(sockfd2, buf, BUFSIZE); 
+                    if (n<0) error("error sending"); 
+                    printf("%s", buf); 
+                    bzero(buf, BUFSIZE); 
+                    n = read(sockfd2, buf, BUFSIZE); 
+                    if (strcmp(buf, "Yes") == 0){
+                        sprintf(choice, "rm %s", name); 
+                        system(choice); 
+                        n = write(sockfd2, buf, BUFSIZE); 
+                        if (n<0) error("error writing"); 
+                    }
+   
+                } else{
+                    strcat(buf, "-1"); 
+                }                
             } else if (strcmp(com, "MKD") == 0) {
                 system("cd ..");
                 system("ls > output");

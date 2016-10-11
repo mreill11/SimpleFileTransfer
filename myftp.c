@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -22,7 +24,7 @@
 void readFile(char *dest, char *fname);
 void error(char *msg);
  
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
     int XIT = 0;
     struct sockaddr_in serveraddr;
     struct hostent *server;
@@ -118,6 +120,69 @@ int main(int argc, char **argv) {
                 error("Error writing to socket"); 
             }
         }
+        if (strcmp(buf, "UPL") == 0){
+            struct stat st;
+            int rounds, j;
+            char *currBuf; 
+            bzero(buf, BUFSIZE); 
+            //receive ACK
+            n = read(sockfd, buf, BUFSIZE); 
+            if (strcmp(buf, "ready") == 0){
+                printf("%s\n", buf); 
+                stat(name, &st); //inclue sys/stat.h
+                int size = st.st_size; 
+    
+                printf("%s", size);
+                //send file size
+                n = write(sockfd, (const char *)&size, sizeof(size)); 
+                if (n<0){
+                    error("write error"); 
+                }
+                char fileBuf[size]; 
+                //read file into buffer to be sent 
+                readFile(fileBuf, name); 
+                
+                rounds = (size + 4095) / 4096; 
+                int round_num = 0; 
+                printf("Here before for loop %s\n", rounds); 
+                for (i=0; i<rounds; i++){ 
+                    for(j=0; j<4096; j++){
+                        currBuf[j] = fileBuf[j+round_num]; 
+                    }
+                    printf("%s\n", currBuf); 
+                    //send filecontents
+                    n = write(sockfd, currBuf, BUFSIZE); 
+                    if (n<0){
+                        error("error writing"); 
+                    }
+                    bzero(currBuf, BUFSIZE); 
+                    round_num=round_num+4096; 
+                }
+            }
+        }else if (strcmp(buf, "DEL")==0){
+            //receive confirmation
+            bzero(buf, BUFSIZE); 
+            n = read(sockfd, buf, BUFSIZE); 
+            if (strcmp(buf, "1") == 0){
+                bzero(buf, BUFSIZE); 
+                printf("confirm deletion: Yes or No\n"); 
+                scanf("%s", buf); 
+                n = write(sockfd, buf, BUFSIZE); 
+                if (n < 0) error("Error writing to socket"); 
+                if (strcmp(buf, "Yes")){
+                        //wait for confirmation
+                    bzero(buf, BUFSIZE); 
+                    n = read(sockfd, buf, BUFSIZE); 
+                    if (n < 0) error("error reading"); 
+                } else{
+                    printf("Delete abandoned by User!\n"); 
+                }
+            }
+            else{
+                printf("File does not exist\n"); 
+            }
+
+        }//end elseif
         
         // Receive the server's reply
         bzero(buf, BUFSIZE); 
