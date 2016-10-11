@@ -49,6 +49,13 @@ int main(int argc, char **argv) {
     short len;
     char name[BUFSIZE];
     char com[BUFSIZE];
+    char* path;
+    char* filename;
+    strcat(filename, "path.txt");
+    
+    system("pwd > path.txt");
+    readFile(path, (char *)"path.txt");
+    printf("Path = %s",path);
 
     // parse command line arguments
     if (argc != 2) {
@@ -147,6 +154,8 @@ int main(int argc, char **argv) {
             } else if (strcmp(com, "DEL") == 0) {
                 
             } else if (strcmp(com, "MKD") == 0) {
+                system("cd ..");
+                system("ls > output");
 
             } else if (strcmp(com, "RMD") == 0) {
 
