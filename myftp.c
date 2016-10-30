@@ -110,39 +110,42 @@ int main(int argc, char *argv[]) {
             }
         } if (strcmp(buf, "UPL") == 0){
             struct stat st;
-            int rounds, j;
+            int rounds, j, size;
             char *currBuf; 
             bzero(buf, BUFSIZE); 
             //receive ACK
             n = read(sockfd, buf, BUFSIZE); 
             if (strcmp(buf, "ready") == 0){
-                printf("%s\n", buf); 
+                printf("%s\n", buf);
+                printf("%s\n", name); 
                 stat(name, &st); //inclue sys/stat.h
-                int size = st.st_size; 
-                printf("%d", size);  
+                size = st.st_size; 
                 //send file size
                 n = write(sockfd, (const char *)&size, BUFSIZE); 
                 if (n<0){
                     error("write error"); 
                 }
-                char fileBuf[size]; 
+                char fileBuf[size+1];
                 //read file into buffer to be sent 
                 readFile(fileBuf, name); 
-                
+                fileBuf[size] = '\0'; 
+                printf("after readfile\n"); 
                 rounds = (size + 4095) / 4096; 
                 int round_num = 0; 
-                printf("Here before for loop %s\n", rounds); 
+                printf("Here before for loop %d\n", rounds); 
                 for (i=0; i<rounds; i++){ 
-                    for(j=0; j<4096; j++){
+                    for(j=0; j<4095; j++){
                         currBuf[j] = fileBuf[j+round_num]; 
                     }
-                    currBuf[4096] = '\0'; 
+                    currBuf[4095] = '\0'; 
                     printf("%s\n", currBuf); 
+                    
                     //send filecontents
                     n = write(sockfd, currBuf, BUFSIZE); 
                     if (n<0){
                         error("error writing"); 
                     }
+                    
                     bzero(currBuf, BUFSIZE); 
                     round_num=round_num+4096; 
                 }
@@ -157,11 +160,12 @@ int main(int argc, char *argv[]) {
                 scanf("%s", buf); 
                 n = write(sockfd, buf, BUFSIZE); 
                 if (n < 0) error("Error writing to socket"); 
-                if (strcmp(buf, "Yes")){
-                        //wait for confirmation
+                if (strcmp(buf, "Yes") == 0){
+                    //wait for confirmation
                     bzero(buf, BUFSIZE); 
                     n = read(sockfd, buf, BUFSIZE); 
-                    if (n < 0) error("error reading"); 
+                    if (n < 0) error("error reading");
+                    printf("Recieved delete confirmation: %s\n", buf); 
                 } else{
                     printf("Delete abandoned by User!\n"); 
                 }

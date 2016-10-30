@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     char *len_string; 
     char com[BUFSIZE];
     char* path;
-    char * choice; 
+    char choice[BUFSIZE]; 
     char* filename;
     //strcat(filename, "path.txt");
     
@@ -137,14 +137,14 @@ int main(int argc, char *argv[]) {
             }else{
             bzero(buf,BUFSIZE);
             printf("before read 2\n");
-            n = read(sockfd2, buf, BUFSIZE);
-            printf("%s", buf); 
-            name =  buf; 
-            bzero(buf, BUFSIZE); 
+            n = read(sockfd2, name, BUFSIZE);
+            //printf("buf: %s", buf); 
+            //name =  buf; 
+            //bzero(buf, BUFSIZE); 
             n = read(sockfd2, buf, BUFSIZE); 
             len_string = buf;
             len = atoi(len_string); 
-            printf("%s%s", name, len_string); 
+            printf("name: %s len: %s", name, len_string); 
             }
             if (strcmp(com, "REQ") == 0) {
 
@@ -183,24 +183,26 @@ int main(int argc, char *argv[]) {
 
             
             } else if (strcmp(com, "DEL") == 0) {
-                printf("HERE\n"); 
+                bzero(buf, BUFSIZE);
                 if(access(name, F_OK) != -1){
                     strcat(buf, "1"); 
                     n = write(sockfd2, buf, BUFSIZE); 
                     if (n<0) error("error sending"); 
-                    printf("%s", buf); 
                     bzero(buf, BUFSIZE); 
                     n = read(sockfd2, buf, BUFSIZE); 
                     if (strcmp(buf, "Yes") == 0){
                         sprintf(choice, "rm %s", name); 
-                        system(choice); 
+                        remove(name);  
+                        bzero(buf, BUFSIZE); 
+                        strcat(buf, "1"); 
                         n = write(sockfd2, buf, BUFSIZE); 
                         if (n<0) error("error writing"); 
                     }
    
                 } else{
                     strcat(buf, "-1"); 
-                }                
+                    }
+
             } else if (strcmp(com, "MKD") == 0) {
                 system("cd ..");
                 system("ls > output");
