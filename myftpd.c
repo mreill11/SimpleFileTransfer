@@ -133,16 +133,18 @@ int main(int argc, char *argv[]) {
                 readFile(buf, "lsOutput.txt");
                 printf("%s\n", buf); 
                 n = write(sockfd2, buf, BUFSIZE);
+                if (n <0) error("Error in LIS\n"); 
             }else{
             bzero(buf,BUFSIZE);
             printf("before read 2\n");
             n = read(sockfd2, buf, BUFSIZE);
-            strcpy(name, buf); 
+            printf("%s", buf); 
+            name =  buf; 
             bzero(buf, BUFSIZE); 
             n = read(sockfd2, buf, BUFSIZE); 
-            strcpy(len_string, buf); 
+            len_string = buf;
             len = atoi(len_string); 
-            printf("%s%d", name, len_string); 
+            printf("%s%s", name, len_string); 
             }
             if (strcmp(com, "REQ") == 0) {
 
@@ -152,7 +154,6 @@ int main(int argc, char *argv[]) {
                 char * currBuf;  
                 int rounds; 
                 bzero(buf, BUFSIZE); 
-                printf("HERE");  
                 //SEND ACK TO CLIENT
                 strcat(buf, "ready"); 
                 printf("%s\n", buf); 
@@ -163,7 +164,7 @@ int main(int argc, char *argv[]) {
                 bzero(buf, BUFSIZE); 
                 //read filesize
                 n = read(sockfd2, buf, BUFSIZE); 
-                filelen = strlen(buf); 
+                filelen = atoi(buf);  
                 bzero(buf, BUFSIZE); 
                 rounds = (filelen + 4095) / 4096; 
                 int round_num = 0;
@@ -171,14 +172,12 @@ int main(int argc, char *argv[]) {
                 for(i=0; i<rounds; i++){
                     //read 4096 bytes of file
                     n = read(sockfd2, buf, BUFSIZE); 
-                    strcat(currBuf, buf); 
                     if(n<0){
                         error("error writing"); 
                     } 
                     fp=fopen(name, "a"); 
-                    fprintf(fp, currBuf); 
+                    fprintf(fp, buf); 
                     fclose(fp); 
-                    bzero(currBuf, BUFSIZE); 
                     bzero(buf, BUFSIZE); 
                 }               
 

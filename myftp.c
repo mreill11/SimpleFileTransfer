@@ -76,7 +76,6 @@ int main(int argc, char *argv[]) {
         error ("ERROR connecting"); 
     }
 
-
     while(1){
         printf("Enter Command: "); 
         scanf("%s", buf);  
@@ -87,15 +86,13 @@ int main(int argc, char *argv[]) {
         if(strcmp(buf, "LIS") != 0 && strcmp(buf,"XIT") !=0){ //if command is not LIS (strcmp returns 0 if strings are equal)
             printf("Enter filename: \n"); 
             scanf("%s", name);
-            n = write(sockfd, name, strlen(name)); 
+            n = write(sockfd, name, sizeof(name));  
             printf("Enter filename length: \n"); 
             scanf("%s", len); 
-            n = write(sockfd, len, strlen(len)); 
+            n = write(sockfd, len, sizeof(len)); 
             printf("IN HERE\n");
         }
-
         // Send the message to the server
-
         if(strcmp(buf,"XIT")==0){
             printf("The connection has been closed\n");
             exit(0);
@@ -111,8 +108,7 @@ int main(int argc, char *argv[]) {
             if (n < 0){
                 error("Error writing to socket"); 
             }
-        }
-        if (strcmp(buf, "UPL") == 0){
+        } if (strcmp(buf, "UPL") == 0){
             struct stat st;
             int rounds, j;
             char *currBuf; 
@@ -123,10 +119,9 @@ int main(int argc, char *argv[]) {
                 printf("%s\n", buf); 
                 stat(name, &st); //inclue sys/stat.h
                 int size = st.st_size; 
-        
-                printf("%s", size);
+                printf("%d", size);  
                 //send file size
-                n = write(sockfd, (const char *)&size, sizeof(size)); 
+                n = write(sockfd, (const char *)&size, BUFSIZE); 
                 if (n<0){
                     error("write error"); 
                 }
@@ -141,6 +136,7 @@ int main(int argc, char *argv[]) {
                     for(j=0; j<4096; j++){
                         currBuf[j] = fileBuf[j+round_num]; 
                     }
+                    currBuf[4096] = '\0'; 
                     printf("%s\n", currBuf); 
                     //send filecontents
                     n = write(sockfd, currBuf, BUFSIZE); 
