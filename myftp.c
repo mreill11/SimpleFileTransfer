@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 
  
@@ -32,8 +33,8 @@ int main(int argc, char *argv[]) {
     int sockfd, portno, n, k, serverlen;
     char *hostname;
     char *command;
-    //short int len; 
-    //char name[BUFSIZE]; 
+    char name[BUFSIZE]; 
+    char len [BUFSIZE]; 
     char buf[BUFSIZE];
     char key[BUFSIZE];
     int i=0;
@@ -51,18 +52,7 @@ int main(int argc, char *argv[]) {
     // Load buffer, 
   
     bzero(buf, BUFSIZE);
-    short len; 
-    char name[BUFSIZE]; 
-    //if (strcmp(buf, "XIT") == 0){
-    //    printf("XIT\n");
-    //    XIT = 1; 
-    //}
-    //if(strcmp(buf, "LIS") == 0){
-    //    printf("Enter length of filename and file name: "); 
-    //    scanf("%hd %s", len, name); 
-    //}
-
-    // Create the socket 
+        // Create the socket 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0){
@@ -95,27 +85,29 @@ int main(int argc, char *argv[]) {
             error("ERROR writing to socket");
 
         if(strcmp(buf, "LIS") != 0 && strcmp(buf,"XIT") !=0){ //if command is not LIS (strcmp returns 0 if strings are equal)
-            printf("Enter length of filename and the file name: ");
-            scanf("%s %s", &len, name);
+            printf("Enter filename: \n"); 
+            scanf("%s", name);
+            n = write(sockfd, name, strlen(name)); 
+            printf("Enter filename length: \n"); 
+            scanf("%s", len); 
+            n = write(sockfd, len, strlen(len)); 
             printf("IN HERE\n");
         }
 
-
         // Send the message to the server
-
 
         if(strcmp(buf,"XIT")==0){
             printf("The connection has been closed\n");
             exit(0);
-        } else if(strcmp(buf, "LIS") != 0){
-            printf("STRCMP\n");
-            n = write (sockfd, (const char *)&len, sizeof(len)); 
-            printf("WRITE\n");
+
+        } else if(strcmp(buf, "LIS") == 0){
+            n = write (sockfd, buf, sizeof(buf)); 
             if ( n<0) {
                 error("Error writing to socket"); 
             }
-            n = write (sockfd, name, strlen(name)); 
-            printf("write 2 %d\n",n);
+            //bzero(buf, BUFSIZE); 
+            n = read(sockfd, buf, sizeof(buf)); 
+            printf("%s\n",buf);
             if (n < 0){
                 error("Error writing to socket"); 
             }
@@ -131,7 +123,7 @@ int main(int argc, char *argv[]) {
                 printf("%s\n", buf); 
                 stat(name, &st); //inclue sys/stat.h
                 int size = st.st_size; 
-    
+        
                 printf("%s", size);
                 //send file size
                 n = write(sockfd, (const char *)&size, sizeof(size)); 

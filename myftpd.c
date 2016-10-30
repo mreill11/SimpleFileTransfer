@@ -47,9 +47,11 @@ int main(int argc, char *argv[]) {
     int n, k; // n = message size, k = key size
     int i;    // counter
     short len;
-    char name[BUFSIZE];
+    char *name;
+    char *len_string; 
     char com[BUFSIZE];
     char* path;
+    char * choice; 
     char* filename;
     //strcat(filename, "path.txt");
     
@@ -124,29 +126,24 @@ int main(int argc, char *argv[]) {
                 close(sockfd2);
                 break;
             }else if(strcmp(com,"LIS") == 0){
-                
-                continue;
-            }
-
+                char choice[20] =  "ls > lsOutput.txt";
+                system(choice); 
+                bzero(buf, BUFSIZE); 
+                printf("in LIS\n"); 
+                readFile(buf, "lsOutput.txt");
+                printf("%s\n", buf); 
+                n = write(sockfd2, buf, BUFSIZE);
+            }else{
             bzero(buf,BUFSIZE);
             printf("before read 2\n");
             n = read(sockfd2, buf, BUFSIZE);
-            if(n<0)
-                error("ERROR reading to socket");
-            len = atoi(buf);
-
-            printf("length = %s\n",buf);
-
-            bzero(buf, BUFSIZE);
-            printf("before read 3\n");
-            n = read(sockfd2,buf,BUFSIZE);
-            if(n<0)
-                error("ERROR reading to socket");
-            strcat(name,buf);
-
-            printf("name of file = %s\n",name);
-
-            printf("%s is buf\n", buf); 
+            strcpy(name, buf); 
+            bzero(buf, BUFSIZE); 
+            n = read(sockfd2, buf, BUFSIZE); 
+            strcpy(len_string, buf); 
+            len = atoi(len_string); 
+            printf("%s%d", name, len_string); 
+            }
             if (strcmp(com, "REQ") == 0) {
 
             } else if (strcmp(com, "UPL") == 0) {
@@ -166,7 +163,7 @@ int main(int argc, char *argv[]) {
                 bzero(buf, BUFSIZE); 
                 //read filesize
                 n = read(sockfd2, buf, BUFSIZE); 
-                filelen = atoi(buf); 
+                filelen = strlen(buf); 
                 bzero(buf, BUFSIZE); 
                 rounds = (filelen + 4095) / 4096; 
                 int round_num = 0;
@@ -187,7 +184,6 @@ int main(int argc, char *argv[]) {
 
             
             } else if (strcmp(com, "DEL") == 0) {
-                    char * choice; 
                 printf("HERE\n"); 
                 if(access(name, F_OK) != -1){
                     strcat(buf, "1"); 
