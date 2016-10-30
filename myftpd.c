@@ -138,15 +138,12 @@ int main(int argc, char *argv[]) {
             bzero(buf,BUFSIZE);
             printf("before read 2\n");
             n = read(sockfd2, name, BUFSIZE);
-            //printf("buf: %s", buf); 
-            //name =  buf; 
-            //bzero(buf, BUFSIZE); 
             n = read(sockfd2, buf, BUFSIZE); 
             len_string = buf;
             len = atoi(len_string); 
             printf("name: %s len: %s", name, len_string); 
-            }
-            if (strcmp(com, "REQ") == 0) {
+            
+            } if (strcmp(com, "REQ") == 0) {
 
             } else if (strcmp(com, "UPL") == 0) {
                 int filelen; 
@@ -164,7 +161,8 @@ int main(int argc, char *argv[]) {
                 bzero(buf, BUFSIZE); 
                 //read filesize
                 n = read(sockfd2, buf, BUFSIZE); 
-                filelen = atoi(buf);  
+                filelen = atoi(buf); 
+                printf("%d\n filelen^", filelen); 
                 bzero(buf, BUFSIZE); 
                 rounds = (filelen + 4095) / 4096; 
                 int round_num = 0;
@@ -200,7 +198,9 @@ int main(int argc, char *argv[]) {
                     }
    
                 } else{
-                    strcat(buf, "-1"); 
+                    strcat(buf, "-1");
+                    n = write(sockfd2, buf, BUFSIZE); 
+                    if (n< 0 ) error("error writing\n"); 
                     }
 
             } else if (strcmp(com, "MKD") == 0) {

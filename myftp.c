@@ -111,34 +111,41 @@ int main(int argc, char *argv[]) {
         } if (strcmp(buf, "UPL") == 0){
             struct stat st;
             int rounds, j, size;
+            int j_limit = 4095; 
             char *currBuf; 
             bzero(buf, BUFSIZE); 
             //receive ACK
             n = read(sockfd, buf, BUFSIZE); 
             if (strcmp(buf, "ready") == 0){
-                printf("%s\n", buf);
-                printf("%s\n", name); 
-                stat(name, &st); //inclue sys/stat.h
-                size = st.st_size; 
-                //send file size
-                n = write(sockfd, (const char *)&size, BUFSIZE); 
+                stat(name, &st); 
+                size = st.st_size;
+                bzero(buf, BUFSIZE); 
+                sprintf(buf, "%d", size);  
+                //send file siz
+                n = write(sockfd, buf, BUFSIZE); 
                 if (n<0){
                     error("write error"); 
                 }
                 char fileBuf[size+1];
                 //read file into buffer to be sent 
                 readFile(fileBuf, name); 
-                fileBuf[size] = '\0'; 
-                printf("after readfile\n"); 
-                rounds = (size + 4095) / 4096; 
-                int round_num = 0; 
-                printf("Here before for loop %d\n", rounds); 
-                for (i=0; i<rounds; i++){ 
-                    for(j=0; j<4095; j++){
-                        currBuf[j] = fileBuf[j+round_num]; 
+                if(size < 4095){
+                    n = write(sockfd, fileBuf, BUFSIZE); 
+
+                }
+                else{
+                    printf("after readfile\n"); 
+                    rounds = (size + 4095) / 4096; 
+                    bzero(currBuf, j_limit+1);  
+                    int round_num = 0; 
+                    printf("Here before for loop %d\n", rounds); 
+                } 
+                /*for (i=0; i<rounds; i++){ 
+                    for(j=0; j<j_limit; j++){ 
+                        printf("%c", fileBuf[j+round_num]); 
                     }
-                    currBuf[4095] = '\0'; 
-                    printf("%s\n", currBuf); 
+                    //currBuf[j_limit] = '\0'; 
+                    //printf("CURR BUF: %s\n", currBuf); 
                     
                     //send filecontents
                     n = write(sockfd, currBuf, BUFSIZE); 
@@ -148,7 +155,7 @@ int main(int argc, char *argv[]) {
                     
                     bzero(currBuf, BUFSIZE); 
                     round_num=round_num+4096; 
-                }
+                }*/
             }
         }else if (strcmp(buf, "DEL")==0){
             //receive confirmation
@@ -176,12 +183,12 @@ int main(int argc, char *argv[]) {
 
         }//end elseif
         
-        // Receive the server's reply
+       /* // Receive the server's reply
         bzero(buf, BUFSIZE); 
         n = read(sockfd, buf, BUFSIZE); 
         if (n < 0){
             error("ERROR reading to socket"); 
-        }
+        }*/
         bzero(buf, BUFSIZE); 
 
     }
