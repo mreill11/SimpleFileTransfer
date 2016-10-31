@@ -159,11 +159,11 @@ int main(int argc, char *argv[]) {
 
 		    bzero(buf, BUFSIZE); 
 		    //receive ACK
-		    n = read(sockfd2, buf, BUFSIZE); 
-		    if (strcmp(buf, "ready") == 0){
+		    //n = read(sockfd2, buf, BUFSIZE); 
+		    //if (strcmp(buf, "ready") == 0){
                 //printf("In REQ! and ready\n");
 		        //Check for access
-		        if(access(name, F_OK) == -1){
+		        if(access(name, F_OK) != -1){
 		            s = -1;
 				bzero(buf,BUFSIZE);
 				sprintf(buf,"%d",s);
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
 		        n = read(sockfd2, buf, BUFSIZE); 
 		        if(n<0) error("error reading!"); 
 		        //printf("%s\n", buf); 
-		    }
+		    //}
 
             } else if (strcmp(com, "UPL") == 0) {
                 /* get start time*/
