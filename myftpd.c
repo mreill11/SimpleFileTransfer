@@ -140,15 +140,77 @@ int main(int argc, char *argv[]) {
                 if (n <0) error("Error in LIS\n"); 
             }else{
             bzero(buf,BUFSIZE);
-            printf("before read 2\n");
             n = read(sockfd2, name, BUFSIZE);
-            n = read(sockfd2, buf, BUFSIZE); 
-            len_string = buf;
-            len = atoi(len_string); 
+            //n = read(sockfd2, buf, BUFSIZE); 
+            //len_string = buf;
+            //len = atoi(len_string); 
             printf("name: %s len: %s", name, len_string); 
-            
-
+            bzero(buf, BUFSIZE); 
             } if (strcmp(com, "REQ") == 0) {
+		    int s;
+			struct stat st;
+	       	    	int rounds, j, size;
+		    	int j_limit = 4095; 
+		    	char currBuf[BUFSIZE]; 
+		    
+		    	td = mhash_init(MHASH_MD5); 
+		    if(td == MHASH_FAILED) return 1; 
+
+		    bzero(buf, BUFSIZE); 
+		    //receive ACK
+		    n = read(sockfd2, buf, BUFSIZE); 
+		    if (strcmp(buf, "ready") == 0){
+                printf("In REQ! and ready\n");
+		        //Check for access
+		        if(access(name, F_OK) == -1){
+		            s = -1;
+				bzero(buf,BUFSIZE);
+				sprintf(buf,"%d",s);
+				n = write(sockfd2,buf,BUFSIZE);
+				if(n<0) error("ERROR IN READING");
+				break;
+		        }
+		        stat(name, &st); 
+		        size = st.st_size;
+		        bzero(buf, BUFSIZE); 
+		        sprintf(buf, "%d", size);  
+		        //send file size
+		        n = write(sockfd2, buf, BUFSIZE); 
+		        if (n<0){
+		            error("write error"); 
+		        }
+		        char fileBuf[size+1];
+		        //read file into buffer to be sent 
+		        readFile(fileBuf, name); 
+		        if(size < 4096){
+		            n = write(sockfd2, fileBuf, BUFSIZE); 
+		            if(n < 0 ) error("Error sending\n"); 
+		        }
+		        else{
+		            rounds = (size + 4095) / 4096; 
+		            int round_num = 0; 
+		            for(i = 0; i<rounds; i++){
+		                for(j = 0; j<4095; j++){
+		                    currBuf[j] = fileBuf[round_num+j]; 
+		                }
+		                n = write(sockfd2, currBuf, BUFSIZE);  
+		                round_num = round_num + 4096;
+		                bzero(currBuf, BUFSIZE); 
+		            }
+		        }
+		        n = write(sockfd2, buf, BUFSIZE); 
+		        mhash(td, &fileBuf, 1); 
+		        serverHash = mhash_end(td);
+		        bzero(buf, BUFSIZE); 
+		        sprintf(buf, "%s", serverHash); 
+		        //printf("%s", serverHash); 
+		        n = write(sockfd2, buf, BUFSIZE);// strlen(serverHash)); 
+		        if(n<0) error("error sending!"); 
+		        bzero(buf, BUFSIZE); 
+		        n = read(sockfd2, buf, BUFSIZE); 
+		        if(n<0) error("error reading!"); 
+		        printf("%s\n", buf); 
+		    }
 
             } else if (strcmp(com, "UPL") == 0) {
                 /* get start time*/
@@ -202,10 +264,12 @@ int main(int argc, char *argv[]) {
                 n = read(sockfd2, buf, BUFSIZE);  
                 mhash(td, &finalBuf, 1); 
                 serverHash = mhash_end(td); 
-                
+                if(strcmp(serverHash, buf) == 0){
+                    printf("compared\n"); 
+                }
                 bzero(buf, BUFSIZE); 
                 sprintf(buf, "Transfer was successful, throughput: %f microseconds", throughput); 
-                n = write(sockfd2, buf, BUFSIZE); // BUFSIZE 
+                n = write(sockfd2, buf, BUFSIZE); 
                 if (n<0) error("Error writing\n"); 
             
             } else if (strcmp(com, "DEL") == 0) {
@@ -216,8 +280,9 @@ int main(int argc, char *argv[]) {
                     if (n<0) error("error sending"); 
                     bzero(buf, BUFSIZE); 
                     n = read(sockfd2, buf, BUFSIZE); 
+                    bzero(buf, BUFSIZE); 
+                    n = read(sockfd2, buf, BUFSIZE); 
                     if (strcmp(buf, "Yes") == 0){
-                        sprintf(choice, "rm %s", name); 
                         remove(name);  
                         bzero(buf, BUFSIZE); 
                         strcat(buf, "1"); 

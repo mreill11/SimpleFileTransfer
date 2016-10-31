@@ -20,12 +20,12 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
- 
+
 #define BUFSIZE 4096
- 
+
 void readFile(char *dest, char *fname);
 void error(char *msg);
- 
+
 int main(int argc, char *argv[]) {
     int XIT = 0;
     MHASH td; 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     int len_s; 
     char key[BUFSIZE];
     int i=0;
- 
+
     /* check command line arguments */
     // CHANGE <text or file name>
     if (argc != 3) {
@@ -51,12 +51,12 @@ int main(int argc, char *argv[]) {
     }
     hostname = argv[1];
     portno = atoi(argv[2]);
- 
- 
+
+
     // Load buffer, 
-  
+
     bzero(buf, BUFSIZE);
-        // Create the socket 
+    // Create the socket 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0){
@@ -65,10 +65,10 @@ int main(int argc, char *argv[]) {
     // Load DNS Entry
     server = gethostbyname(hostname);
     if (server == NULL) {
-            fprintf(stderr,"ERROR, no such host as %s\n", hostname);
-            exit(0);
+        fprintf(stderr,"ERROR, no such host as %s\n", hostname);
+        exit(0);
     }
- 
+
     // Obtain server address
     bzero((char *) &serveraddr, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
@@ -91,9 +91,9 @@ int main(int argc, char *argv[]) {
             printf("Enter filename: \n"); 
             scanf("%s", name);
             n = write(sockfd, name, sizeof(name));  
-            printf("Enter filename length: \n"); 
-            scanf("%s", len); 
-            n = write(sockfd, len, sizeof(len)); 
+            //printf("Enter filename length: \n"); 
+            // scanf("%s", len); 
+            // n = write(sockfd, len, sizeof(len)); 
             printf("IN HERE\n");
         }
         // Send the message to the server
@@ -112,12 +112,15 @@ int main(int argc, char *argv[]) {
             if (n < 0){
                 error("Error writing to socket"); 
             }
-        } if (strcmp(buf, "UPL") == 0){
+        } 
+        printf("Looking for correct strcmp %s\n",buf);
+        if (strcmp(buf, "UPL") == 0){
             struct stat st;
             int rounds, j, size;
             int j_limit = 4095; 
             char currBuf[BUFSIZE]; 
-            
+
+
             td = mhash_init(MHASH_MD5); 
             if(td == MHASH_FAILED) return 1; 
 
@@ -140,7 +143,9 @@ int main(int argc, char *argv[]) {
                     error("write error"); 
                 }
                 char fileBuf[size+1];
+
                 //read file into buffer to be sent 
+
                 readFile(fileBuf, name); 
                 if(size < 4096){
                     n = write(sockfd, fileBuf, BUFSIZE); 
@@ -158,7 +163,7 @@ int main(int argc, char *argv[]) {
                         bzero(currBuf, BUFSIZE); 
                     }
                 }
-                n = write(sockfd, buf, BUFSIZE); 
+                //n = write(sockfd, buf, BUFSIZE); 
                 mhash(td, &fileBuf, 1); 
                 serverHash = mhash_end(td);
                 bzero(buf, BUFSIZE); 
@@ -169,7 +174,8 @@ int main(int argc, char *argv[]) {
                 bzero(buf, BUFSIZE); 
                 n = read(sockfd, buf, BUFSIZE); 
                 if(n<0) error("error reading!"); 
-                printf("%s\n", buf); 
+                printf("%s\n", buf);
+                bzero(buf, BUFSIZE); 
             }
         }else if (strcmp(buf, "DEL")==0){
             //receive confirmation
@@ -179,6 +185,7 @@ int main(int argc, char *argv[]) {
                 bzero(buf, BUFSIZE); 
                 printf("confirm deletion: Yes or No\n"); 
                 scanf("%s", buf); 
+                printf("%s\n", buf); 
                 n = write(sockfd, buf, BUFSIZE); 
                 if (n < 0) error("Error writing to socket"); 
                 if (strcmp(buf, "Yes") == 0){
@@ -195,20 +202,84 @@ int main(int argc, char *argv[]) {
                 printf("File does not exist\n"); 
             }
 
-        }//end elseif
-        
-       /* // Receive the server's reply
-        bzero(buf, BUFSIZE); 
-        n = read(sockfd, buf, BUFSIZE); 
-        if (n < 0){
-            error("ERROR reading to socket"); 
-        }*/
+        }else if(strcmp(buf, "REQ") == 0){
+            printf("In REQ commande =%s\n",buf);
+            struct timeval start_t, end_t;               
+            /* get start time*/
+            if(gettimeofday(&start_t, NULL)==-1){
+                error("Timing Error!\n"); 
+                exit(1); 
+            }     
+
+            int filelen; 
+            FILE *fp; 
+            char finalBuf[BUFSIZE];  
+            int rounds; 
+            bzero(buf, BUFSIZE);
+
+            td = mhash_init(MHASH_MD5); 
+            if(td == MHASH_FAILED) return 1; 
+
+            /*SEND ACK TO CLIENT*/
+            strcat(buf, "ready"); 
+
+            n = write(sockfd, buf, BUFSIZE); 
+            if (n < 0){
+                error("Error in reading socket3\n"); 
+            }
+            bzero(buf, BUFSIZE); 
+
+            /*Read filesize*/
+            n = read(sockfd, buf, BUFSIZE); 
+            filelen = atoi(buf);
+            if(filelen<0){
+                printf("Im sorry that file does not exist!\n");
+                continue;
+            }
+            bzero(buf, BUFSIZE); 
+            /*Loop to read in 4096 bit chunks*/
+            rounds = (filelen + 4095) / 4096; 
+            int round_num = 0;
+
+            for(i=0; i<rounds; i++){
+                n = read(sockfd, buf, BUFSIZE); 
+                if(n<0){
+                    error("error writing"); 
+                } 
+                fp=fopen(name, "a"); 
+                fprintf(fp, buf); 
+                fclose(fp); 
+                strcat(finalBuf, buf); 
+                bzero(buf, BUFSIZE); 
+            }
+            if(gettimeofday(&end_t, NULL)==-1){
+                error("Timing Error!\n"); 
+                exit(1);
+            }
+            double throughput = (end_t.tv_usec - start_t.tv_usec); 
+
+            n = read(sockfd, buf, BUFSIZE);  
+            mhash(td, &finalBuf, 1); 
+            serverHash = mhash_end(td); 
+
+            bzero(buf, BUFSIZE); 
+            sprintf(buf, "Transfer was successful, throughput: %f microseconds", throughput); 
+            n = write(sockfd, buf, BUFSIZE); // BUFSIZE 
+            if (n<0) error("Error writing\n");
+        } //end elseif
+
+        /* // Receive the server's reply
+           bzero(buf, BUFSIZE); 
+           n = read(sockfd, buf, BUFSIZE); 
+           if (n < 0){
+           error("ERROR reading to socket"); 
+           }*/
         bzero(buf, BUFSIZE); 
 
     }
     return 0; 
 }
- 
+
 // Read file into buffer
 void readFile(char *dest, char *fname) {
     FILE *fp = fopen(fname, "r");
