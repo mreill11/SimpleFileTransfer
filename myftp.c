@@ -266,7 +266,53 @@ int main(int argc, char *argv[]) {
             sprintf(buf, "Transfer was successful, throughput: %f microseconds", throughput); 
             n = write(sockfd, buf, BUFSIZE); // BUFSIZE 
             if (n<0) error("Error writing\n");
-        } //end elseif
+        } else if (strcmp(buf, "MKD") == 0) {
+            bzero(buf, BUFSIZE);
+            n = read(sockfd, buf, BUFSIZE);
+            if (strcmp(buf, "1") == 0) {
+                // Success!
+                printf("The directory was successfully made.\n");
+            } else if (strcmp(buf, "-2") == 0) {
+                // Already exists
+                printf("The directory already exists on server.\n");
+            } else {
+                printf("Error making directory.\n");
+            }
+        } else if (strcmp(buf, "RMD") == 0) {
+            bzero(buf, BUFSIZE);
+            n = read(sockfd, buf, BUFSIZE);
+            if (strcmp(buf, "-1") == 0) {
+                // not a directory
+                printf("This directory does not exist on the server.\n");
+            } else if (strcmp(buf, "1") == 0) {
+                bzero(buf, BUFSIZE);
+                printf("Are you sure you want to delete this directory? (yes/no) ");
+                scanf("%s", buf);
+                if (strcasecmp(buf, "no") == 0) {
+                    printf("Delete abandoned by user!\n");
+                    n = write(sockfd, buf, BUFSIZE);
+                } else {
+                    n = write(sockfd, buf, BUFSIZE);
+                    bzero(buf, BUFSIZE);
+                    n = read(sockfd, buf, BUFSIZE);
+                    if (strcmp(buf, "1") == 0) {
+                        printf("Directory deleted.\n");
+                    } else {
+                        printf("Failed to delete directory.\n");
+                    }
+                }
+            }
+        } else if (strcmp(buf, "CHD") == 0) {
+            bzero(buf, BUFSIZE);
+            n = read(sockfd, buf, BUFSIZE);
+            if (strcmp(buf, "-2") == 0) {
+                printf("The directory does not exist on the server.\n");
+            } else if (strcmp(buf, "-1") == 0) {
+                printf("Error changing directory.\n");
+            } else {
+                printf("Changed current directory.\n");
+            }
+        }//end elseif
 
         /* // Receive the server's reply
            bzero(buf, BUFSIZE); 

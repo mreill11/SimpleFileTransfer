@@ -27,6 +27,7 @@
 #define BUFSIZE 4096
 
 void readFile(char *dest, char*fname);
+int path_is_directory (const char* path);
 
 // error handling
 void error(char *msg) {
@@ -116,14 +117,14 @@ int main(int argc, char *argv[]) {
         while(1) {
             // receive a datagram from a client
             bzero(buf, BUFSIZE);
-            printf("Before read 1\n");
+            //printf("Before read 1\n");
             n = read(sockfd2, buf, BUFSIZE);
             strcpy(com,buf);
-            printf("Command = %s\n",com);
+            //printf("Command = %s\n",com);
 
             if(n < 0)
                error("Error reading from socket");
-            printf("server recieved %d bytes: %s\n" , n, buf);
+            //printf("server recieved %d bytes: %s\n" , n, buf);
 
             /* REQUEST HANDLING BLOCK */
             if(strcmp(com,"XIT") == 0){
@@ -133,9 +134,9 @@ int main(int argc, char *argv[]) {
                 char choice[20] =  "ls > lsOutput.txt";
                 system(choice); 
                 bzero(buf, BUFSIZE); 
-                printf("in LIS\n"); 
+                //printf("in LIS\n"); 
                 readFile(buf, "lsOutput.txt");
-                printf("%s\n", buf); 
+                //printf("%s\n", buf); 
                 n = write(sockfd2, buf, BUFSIZE);
                 if (n <0) error("Error in LIS\n"); 
             }else{
@@ -144,7 +145,7 @@ int main(int argc, char *argv[]) {
             //n = read(sockfd2, buf, BUFSIZE); 
             //len_string = buf;
             //len = atoi(len_string); 
-            printf("name: %s len: %s", name, len_string); 
+            //printf("name: %s len: %s", name, len_string); 
             bzero(buf, BUFSIZE); 
             } if (strcmp(com, "REQ") == 0) {
 		    int s;
@@ -160,7 +161,7 @@ int main(int argc, char *argv[]) {
 		    //receive ACK
 		    n = read(sockfd2, buf, BUFSIZE); 
 		    if (strcmp(buf, "ready") == 0){
-                printf("In REQ! and ready\n");
+                //printf("In REQ! and ready\n");
 		        //Check for access
 		        if(access(name, F_OK) == -1){
 		            s = -1;
@@ -209,7 +210,7 @@ int main(int argc, char *argv[]) {
 		        bzero(buf, BUFSIZE); 
 		        n = read(sockfd2, buf, BUFSIZE); 
 		        if(n<0) error("error reading!"); 
-		        printf("%s\n", buf); 
+		        //printf("%s\n", buf); 
 		    }
 
             } else if (strcmp(com, "UPL") == 0) {
@@ -265,7 +266,7 @@ int main(int argc, char *argv[]) {
                 mhash(td, &finalBuf, 1); 
                 serverHash = mhash_end(td); 
                 if(strcmp(serverHash, buf) == 0){
-                    printf("compared\n"); 
+                    //printf("compared\n"); 
                 }
                 bzero(buf, BUFSIZE); 
                 sprintf(buf, "Transfer was successful, throughput: %f microseconds", throughput); 
@@ -297,20 +298,71 @@ int main(int argc, char *argv[]) {
                     }
 
             } else if (strcmp(com, "MKD") == 0) {
-                system("cd ..");
-                system("ls > output");
+                struct stat st = {0};
+
+                if (stat(name, &st) == 0) {
+                    if (S_ISDIR(st.st_mode)) {
+                        // Return -2
+                        bzero(buf, BUFSIZE);
+                        strcat(buf, "-2");
+                    } else {
+                        int c = mkdir(name, 0700);
+                        if (!c)
+                            printf("Dir created");
+                        // Return 1
+                        bzero(buf, BUFSIZE);
+                        strcat(buf, "1");
+                    }                   
+                } else {
+                    // Return -1
+                    bzero(buf, BUFSIZE);
+                    strcat(buf, "-1");
+                }
+
+                n = write(sockfd2, buf, BUFSIZE);
+                continue;
 
             } else if (strcmp(com, "RMD") == 0) {
+                // Remove Directory
+                int before = path_is_directory(name);
+
+                if (!before) {
+                    // not a directory, send -1
+                    bzero(buf, BUFSIZE);
+                    strcat(buf, "-1");
+                    n = write(sockfd2, buf, BUFSIZE);
+                } else {
+                    // directory exists, send 1
+                    bzero(buf, BUFSIZE);
+                    strcat(buf, "1");
+                    n = write(sockfd2, buf, BUFSIZE);
+
+                    // Read in client confirmation
+                    bzero(buf, BUFSIZE);
+                    n = read(sockfd2, buf, BUFSIZE);
+                    if (strcasecmp(buf, "yes")) {
+                        int r = rmdir(name);
+                        bzero(buf, BUFSIZE);
+                        if (!r) {
+                            strcat(buf, "1");
+                        } else {
+                            strcat(buf, "-1");
+                        }
+                        n = write(sockfd2, buf, BUFSIZE);
+                        continue;
+                    }
+                }
+                //n = write(sockfd2, buf, BUFSIZE);
 
             } else if (strcmp(com, "CHD") == 0) {
                 bzero(buf, BUFSIZE);
-                printf("READ\n");
+                //printf("READ\n");
 
                 n = read(sockfd2, buf, BUFSIZE);    // length of directory name
                 if(n < 0)
                     error("Error reading from socket");
             
-                printf("read\n");
+                //printf("read\n");
                 len = atoi(buf);
                 bzero(buf, BUFSIZE);
 
@@ -318,7 +370,7 @@ int main(int argc, char *argv[]) {
                 if(n < 0)
                     error("Error reading from socket");
             
-                printf("DONE\n");
+                //printf("DONE\n");
                 for(i=0; i<strlen(buf); i++){
                 name[i] = buf[i]; 
                 }
@@ -345,12 +397,12 @@ int main(int argc, char *argv[]) {
         
             n = write(sockfd2, buf, strlen(buf));
 
-            printf("\nN: %d\n",n);
-            printf("Recieved %s\n", buf);
+           // printf("\nN: %d\n",n);
+            //printf("Recieved %s\n", buf);
 
             if(n < 0)
                 error("Error reading from socket");
-            printf("server recieved %d bytes: %s\n" , n, buf);
+            //printf("server recieved %d bytes: %s\n" , n, buf);
 
         }
     }
@@ -367,4 +419,13 @@ void readFile(char *dest, char *fname){
         }
         fclose(fp);
     }
+}
+
+int path_is_directory (const char* path) {
+    struct stat s_buf;
+
+    if (stat(path, &s_buf))
+        return 0;
+
+    return S_ISDIR(s_buf.st_mode);
 }
