@@ -12,6 +12,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <errno.h>
+#include <mhash.h>
 #include <netdb.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -36,6 +37,7 @@ void error(char *msg) {
 int main(int argc, char *argv[]) {
     int sockfd; // socket 
     int sockfd2;
+    MHASH td; 
     int port; // port number
     int clientlen; // byte size of client's address
     struct sockaddr_in serveraddr; // server's addr
@@ -49,6 +51,7 @@ int main(int argc, char *argv[]) {
     short len;
     char *name;
     char *len_string; 
+    unsigned char * serverHash; 
     char com[BUFSIZE];
     char* path;
     char choice[BUFSIZE]; 
@@ -148,27 +151,29 @@ int main(int argc, char *argv[]) {
             } else if (strcmp(com, "UPL") == 0) {
                 int filelen; 
                 FILE *fp; 
-                char * currBuf;  
+                char finalBuf[BUFSIZE];  
                 int rounds; 
-                bzero(buf, BUFSIZE); 
+                bzero(buf, BUFSIZE);
+
+                td = mhash_init(MHASH_MD5); 
+                if(td == MHASH_FAILED) return 1; 
+                
                 //SEND ACK TO CLIENT
                 strcat(buf, "ready"); 
                 printf("%s\n", buf); 
                 n = write(sockfd2, buf, BUFSIZE); 
                 if (n < 0){
-                    error("Error in reading scoket3\n"); 
+                    error("Error in reading socket3\n"); 
                 }
                 bzero(buf, BUFSIZE); 
                 //read filesize
                 n = read(sockfd2, buf, BUFSIZE); 
                 filelen = atoi(buf); 
-                printf("%d\n filelen^", filelen); 
                 bzero(buf, BUFSIZE); 
                 rounds = (filelen + 4095) / 4096; 
                 int round_num = 0;
-                printf("HERE"); 
+                 
                 for(i=0; i<rounds; i++){
-                    //read 4096 bytes of file
                     n = read(sockfd2, buf, BUFSIZE); 
                     if(n<0){
                         error("error writing"); 
@@ -176,9 +181,17 @@ int main(int argc, char *argv[]) {
                     fp=fopen(name, "a"); 
                     fprintf(fp, buf); 
                     fclose(fp); 
+                    strcat(finalBuf, buf); 
                     bzero(buf, BUFSIZE); 
-                }               
-
+                    
+                }
+                bzero(buf, BUFSIZE); 
+                n = read(sockfd2, buf, BUFSIZE);  
+                mhash(td, &finalBuf, 1); 
+                serverHash = mhash_end(td); 
+                if(strcmp(serverHash, buf) == 0){
+                    printf("Hash are the same"); 
+                }
             
             } else if (strcmp(com, "DEL") == 0) {
                 bzero(buf, BUFSIZE);

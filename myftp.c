@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <mhash.h>
 #include <limits.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -27,15 +28,18 @@ void error(char *msg);
  
 int main(int argc, char *argv[]) {
     int XIT = 0;
+    MHASH td; 
+    char filecontent[BUFSIZE]; 
     struct sockaddr_in serveraddr;
     struct hostent *server;
-    struct timeval start, end;
-    int sockfd, portno, n, k, serverlen;
+    int sockfd, filesize, portno, n, k, serverlen;
     char *hostname;
     char *command;
+    unsigned char * serverHash; 
     char name[BUFSIZE]; 
     char len [BUFSIZE]; 
     char buf[BUFSIZE];
+    int len_s; 
     char key[BUFSIZE];
     int i=0;
  
@@ -112,16 +116,25 @@ int main(int argc, char *argv[]) {
             struct stat st;
             int rounds, j, size;
             int j_limit = 4095; 
-            char *currBuf; 
+            char currBuf[BUFSIZE]; 
+            
+            td = mhash_init(MHASH_MD5); 
+            if(td == MHASH_FAILED) return 1; 
+
             bzero(buf, BUFSIZE); 
             //receive ACK
             n = read(sockfd, buf, BUFSIZE); 
             if (strcmp(buf, "ready") == 0){
+                //Check for access
+                if(access(name, F_OK) == -1){
+                    printf("File does not exist\n"); 
+                    break; 
+                }
                 stat(name, &st); 
                 size = st.st_size;
                 bzero(buf, BUFSIZE); 
                 sprintf(buf, "%d", size);  
-                //send file siz
+                //send file size
                 n = write(sockfd, buf, BUFSIZE); 
                 if (n<0){
                     error("write error"); 
@@ -129,33 +142,26 @@ int main(int argc, char *argv[]) {
                 char fileBuf[size+1];
                 //read file into buffer to be sent 
                 readFile(fileBuf, name); 
-                if(size < 4095){
+                if(size < 4096){
                     n = write(sockfd, fileBuf, BUFSIZE); 
-
+                    if(n < 0 ) error("Error sending\n"); 
                 }
                 else{
-                    printf("after readfile\n"); 
                     rounds = (size + 4095) / 4096; 
-                    bzero(currBuf, j_limit+1);  
                     int round_num = 0; 
-                    printf("Here before for loop %d\n", rounds); 
-                } 
-                /*for (i=0; i<rounds; i++){ 
-                    for(j=0; j<j_limit; j++){ 
-                        printf("%c", fileBuf[j+round_num]); 
+                    for(i = 0; i<rounds; i++){
+                        for(j = 0; j<4095; j++){
+                            currBuf[j] = fileBuf[round_num+j]; 
+                        }
+                        //currBuf[4095] = '\0'; 
+                        n = write(sockfd, currBuf, strlen(currBuf)); //BUFSIZE); 
+                        round_num = round_num + 4096;
+                        bzero(currBuf, BUFSIZE); 
                     }
-                    //currBuf[j_limit] = '\0'; 
-                    //printf("CURR BUF: %s\n", currBuf); 
-                    
-                    //send filecontents
-                    n = write(sockfd, currBuf, BUFSIZE); 
-                    if (n<0){
-                        error("error writing"); 
-                    }
-                    
-                    bzero(currBuf, BUFSIZE); 
-                    round_num=round_num+4096; 
-                }*/
+                }
+                mhash(td, &fileBuf, 1); 
+                serverHash = mhash_end(td); 
+                n = write(sockfd, serverHash, sizeof(serverHash)); 
             }
         }else if (strcmp(buf, "DEL")==0){
             //receive confirmation
