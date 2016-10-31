@@ -153,15 +153,23 @@ int main(int argc, char *argv[]) {
                         for(j = 0; j<4095; j++){
                             currBuf[j] = fileBuf[round_num+j]; 
                         }
-                        //currBuf[4095] = '\0'; 
-                        n = write(sockfd, currBuf, strlen(currBuf)); //BUFSIZE); 
+                        n = write(sockfd, currBuf, BUFSIZE);  
                         round_num = round_num + 4096;
                         bzero(currBuf, BUFSIZE); 
                     }
                 }
+                n = write(sockfd, buf, BUFSIZE); 
                 mhash(td, &fileBuf, 1); 
-                serverHash = mhash_end(td); 
-                n = write(sockfd, serverHash, sizeof(serverHash)); 
+                serverHash = mhash_end(td);
+                bzero(buf, BUFSIZE); 
+                sprintf(buf, "%s", serverHash); 
+                //printf("%s", serverHash); 
+                n = write(sockfd, buf, BUFSIZE);// strlen(serverHash)); 
+                if(n<0) error("error sending!"); 
+                bzero(buf, BUFSIZE); 
+                n = read(sockfd, buf, BUFSIZE); 
+                if(n<0) error("error reading!"); 
+                printf("%s\n", buf); 
             }
         }else if (strcmp(buf, "DEL")==0){
             //receive confirmation

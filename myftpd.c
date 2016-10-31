@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
     int clientlen; // byte size of client's address
     struct sockaddr_in serveraddr; // server's addr
     struct sockaddr_in clientaddr; // client addr
+    struct timeval start_t, end_t; 
     struct hostent *hostp; // client host info
     char buf[BUFSIZE]; // message buffer
     char *hostaddrp; // dotted decimal host addr string
@@ -146,9 +147,15 @@ int main(int argc, char *argv[]) {
             len = atoi(len_string); 
             printf("name: %s len: %s", name, len_string); 
             
+
             } if (strcmp(com, "REQ") == 0) {
 
             } else if (strcmp(com, "UPL") == 0) {
+                /* get start time*/
+                if(gettimeofday(&start_t, NULL)==-1){
+                error("Timing Error!\n"); 
+                exit(1); 
+                }     
                 int filelen; 
                 FILE *fp; 
                 char finalBuf[BUFSIZE];  
@@ -158,18 +165,20 @@ int main(int argc, char *argv[]) {
                 td = mhash_init(MHASH_MD5); 
                 if(td == MHASH_FAILED) return 1; 
                 
-                //SEND ACK TO CLIENT
+                /*SEND ACK TO CLIENT*/
                 strcat(buf, "ready"); 
-                printf("%s\n", buf); 
+                
                 n = write(sockfd2, buf, BUFSIZE); 
                 if (n < 0){
                     error("Error in reading socket3\n"); 
                 }
                 bzero(buf, BUFSIZE); 
-                //read filesize
+
+                /*Read filesize*/
                 n = read(sockfd2, buf, BUFSIZE); 
                 filelen = atoi(buf); 
                 bzero(buf, BUFSIZE); 
+                /*Loop to read in 4096 bit chunks*/
                 rounds = (filelen + 4095) / 4096; 
                 int round_num = 0;
                  
@@ -183,19 +192,25 @@ int main(int argc, char *argv[]) {
                     fclose(fp); 
                     strcat(finalBuf, buf); 
                     bzero(buf, BUFSIZE); 
-                    
                 }
-                bzero(buf, BUFSIZE); 
+                if(gettimeofday(&end_t, NULL)==-1){
+                    error("Timing Error!\n"); 
+                    exit(1);
+                }
+                double throughput = (end_t.tv_usec - start_t.tv_usec); 
+
                 n = read(sockfd2, buf, BUFSIZE);  
                 mhash(td, &finalBuf, 1); 
                 serverHash = mhash_end(td); 
-                if(strcmp(serverHash, buf) == 0){
-                    printf("Hash are the same"); 
-                }
+                
+                bzero(buf, BUFSIZE); 
+                sprintf(buf, "Transfer was successful, throughput: %f microseconds", throughput); 
+                n = write(sockfd2, buf, BUFSIZE); // BUFSIZE 
+                if (n<0) error("Error writing\n"); 
             
             } else if (strcmp(com, "DEL") == 0) {
                 bzero(buf, BUFSIZE);
-                if(access(name, F_OK) != -1){
+                if(access(name, F_OK) != -1 || access(name, X_OK) != -1){
                     strcat(buf, "1"); 
                     n = write(sockfd2, buf, BUFSIZE); 
                     if (n<0) error("error sending"); 
