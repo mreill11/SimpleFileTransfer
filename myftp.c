@@ -81,6 +81,7 @@ int main(int argc, char *argv[]) {
     }
 
     while(1){
+        printf("Command options are REQ, UPL, DEL, LIS, MKD, RMD, CHD, and XIT\n");
         printf("Enter Command: "); 
         scanf("%s", buf);  
         n = write(sockfd,buf, strlen(buf)); 
@@ -112,7 +113,7 @@ int main(int argc, char *argv[]) {
             if (n < 0){
                 error("Error writing to socket"); 
             }
-        } 
+        }/* 
         printf("Looking for correct strcmp %s\n",buf);
         if (strcmp(buf, "UPL") == 0){
             struct stat st;
@@ -205,7 +206,7 @@ int main(int argc, char *argv[]) {
         }else if(strcmp(buf, "REQ") == 0){
             printf("In REQ commande =%s\n",buf);
             struct timeval start_t, end_t;               
-            /* get start time*/
+             //get start time
             if(gettimeofday(&start_t, NULL)==-1){
                 error("Timing Error!\n"); 
                 exit(1); 
@@ -220,7 +221,7 @@ int main(int argc, char *argv[]) {
             td = mhash_init(MHASH_MD5); 
             if(td == MHASH_FAILED) return 1; 
 
-            /*SEND ACK TO CLIENT*/
+            //SEND ACK TO CLIENT
             strcat(buf, "ready"); 
 
             n = write(sockfd, buf, BUFSIZE); 
@@ -229,7 +230,7 @@ int main(int argc, char *argv[]) {
             }
             bzero(buf, BUFSIZE); 
 
-            /*Read filesize*/
+            //Read filesize
             n = read(sockfd, buf, BUFSIZE); 
             filelen = atoi(buf);
             if(filelen<0){
@@ -237,7 +238,7 @@ int main(int argc, char *argv[]) {
                 continue;
             }
             bzero(buf, BUFSIZE); 
-            /*Loop to read in 4096 bit chunks*/
+            //Loop to read in 4096 bit chunks
             rounds = (filelen + 4095) / 4096; 
             int round_num = 0;
 
@@ -265,7 +266,7 @@ int main(int argc, char *argv[]) {
             bzero(buf, BUFSIZE); 
             sprintf(buf, "Transfer was successful, throughput: %f microseconds", throughput); 
             n = write(sockfd, buf, BUFSIZE); // BUFSIZE 
-            if (n<0) error("Error writing\n");
+           if (n<0) error("Error writing\n");
         } else if (strcmp(buf, "MKD") == 0) {
             bzero(buf, BUFSIZE);
             n = read(sockfd, buf, BUFSIZE);
@@ -314,12 +315,12 @@ int main(int argc, char *argv[]) {
             }
         }//end elseif
 
-        /* // Receive the server's reply
-           bzero(buf, BUFSIZE); 
-           n = read(sockfd, buf, BUFSIZE); 
-           if (n < 0){
-           error("ERROR reading to socket"); 
-           }*/
+         // Receive the server's reply
+         //  bzero(buf, BUFSIZE); 
+         //  n = read(sockfd, buf, BUFSIZE); 
+         //  if (n < 0){
+         //  error("ERROR reading to socket"); 
+         //  }*/
         bzero(buf, BUFSIZE); 
 
     }

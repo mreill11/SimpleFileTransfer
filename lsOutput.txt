@@ -1,0 +1,8 @@
+lsOutput.txt
+Makefile
+myftp
+myftp.c
+myftpd
+myftpd.c
+README.md
+requests.c
