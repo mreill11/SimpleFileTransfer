@@ -83,8 +83,10 @@ int main(int argc, char *argv[]) {
     while(1){
         printf("Command options are REQ, UPL, DEL, LIS, MKD, RMD, CHD, and XIT\n");
         printf("Enter Command: "); 
+        bzero(buf, BUFSIZE);
         scanf("%s", buf);  
         n = write(sockfd,buf, strlen(buf)); 
+        printf("Buffer is %s\n",buf);
         if(n<0)
             error("ERROR writing to socket");
 
@@ -95,7 +97,6 @@ int main(int argc, char *argv[]) {
             //printf("Enter filename length: \n"); 
             // scanf("%s", len); 
             // n = write(sockfd, len, sizeof(len)); 
-            printf("IN HERE\n");
         }
         // Send the message to the server
         if(strcmp(buf,"XIT")==0){
@@ -103,18 +104,17 @@ int main(int argc, char *argv[]) {
             exit(0);
 
         } else if(strcmp(buf, "LIS") == 0){
-            n = write (sockfd, buf, sizeof(buf)); 
-            if ( n<0) {
-                error("Error writing to socket"); 
-            }
-            //bzero(buf, BUFSIZE); 
-            n = read(sockfd, buf, sizeof(buf)); 
+            bzero(buf,BUFSIZE);
+            printf("BUF IS >>>>%s<<<<\n",buf);
+            if (n < 0) error("Error reading to socket");
+            n = read(sockfd, buf, BUFSIZE); 
+            printf("size of buf %d \n", strlen(buf));
             printf("%s\n",buf);
             if (n < 0){
-                error("Error writing to socket"); 
+                error("Error writing to socket");
             }
-        }/* 
-        printf("Looking for correct strcmp %s\n",buf);
+            bzero(buf,BUFSIZE);
+        }
         if (strcmp(buf, "UPL") == 0){
             struct stat st;
             int rounds, j, size;
@@ -127,61 +127,77 @@ int main(int argc, char *argv[]) {
 
             bzero(buf, BUFSIZE); 
             //receive ACK
-            n = read(sockfd, buf, BUFSIZE); 
-            if (strcmp(buf, "ready") == 0){
+            //n = read(sockfd, buf, BUFSIZE); 
+            //if (strcmp(buf, "ready") == 0){
                 //Check for access
                 if(access(name, F_OK) == -1){
                     printf("File does not exist\n"); 
-                    break; 
-                }
-                stat(name, &st); 
-                size = st.st_size;
-                bzero(buf, BUFSIZE); 
-                sprintf(buf, "%d", size);  
-                //send file size
-                n = write(sockfd, buf, BUFSIZE); 
-                if (n<0){
-                    error("write error"); 
-                }
-                char fileBuf[size+1];
+                }else{
+                    FILE *fp = fopen(name,"r");
+                    fseek(fp,0L,SEEK_END);
+                    size = ftell(fp);
+                    fseek(fp,0L,SEEK_SET);
+                    bzero(buf,BUFSIZE);
+                    sprintf(buf,"%d",size);
+                    n = write(sockfd, buf, BUFSIZE); 
+                    if (n<0) error("write error");
+
+                    int i=0;
+                    int total =0;
+                    while(i = fread(currBuf,sizeof(char),BUFSIZE,fp)){
+                        total += i;
+                        n = write(sockfd,currBuf,i);
+                        bzero(currBuf,BUFSIZE);
+                    }
+                    fclose(fp);
+                    /*stat(name, &st); 
+                    size = st.st_size;
+                    bzero(buf, BUFSIZE); 
+                    sprintf(buf, "%d", size);  
+                    //send file size
+                    n = write(sockfd, buf, BUFSIZE); 
+                    if (n<0) error("write error");
+                    char fileBuf[size+1];
 
                 //read file into buffer to be sent 
 
-                readFile(fileBuf, name); 
-                if(size < 4096){
-                    n = write(sockfd, fileBuf, BUFSIZE); 
-                    if(n < 0 ) error("Error sending\n"); 
-                }
-                else{
-                    rounds = (size + 4095) / 4096; 
-                    int round_num = 0; 
-                    for(i = 0; i<rounds; i++){
-                        for(j = 0; j<4095; j++){
-                            currBuf[j] = fileBuf[round_num+j]; 
-                        }
-                        n = write(sockfd, currBuf, BUFSIZE);  
-                        round_num = round_num + 4096;
-                        bzero(currBuf, BUFSIZE); 
+                    readFile(fileBuf, name); 
+                    if(size < 4096){
+                        n = write(sockfd, fileBuf, BUFSIZE); 
+                        if(n < 0 ) error("Error sending\n"); 
                     }
-                }
-                //n = write(sockfd, buf, BUFSIZE); 
-                mhash(td, &fileBuf, 1); 
-                serverHash = mhash_end(td);
-                bzero(buf, BUFSIZE); 
-                sprintf(buf, "%s", serverHash); 
-                //printf("%s", serverHash); 
-                n = write(sockfd, buf, BUFSIZE);// strlen(serverHash)); 
-                if(n<0) error("error sending!"); 
-                bzero(buf, BUFSIZE); 
-                n = read(sockfd, buf, BUFSIZE); 
-                if(n<0) error("error reading!"); 
-                printf("%s\n", buf);
-                bzero(buf, BUFSIZE); 
+                    else{
+                        rounds = (size + 4095) / 4096; 
+                        int round_num = 0; 
+                        for(i = 0; i<rounds; i++){
+                            for(j = 0; j<4095; j++){
+                                currBuf[j] = fileBuf[round_num+j]; 
+                            }
+                            n = write(sockfd, currBuf, BUFSIZE);  
+                            round_num = round_num + 4096;
+                            bzero(currBuf, BUFSIZE); 
+                        }
+                    }*/
+                    //n = write(sockfd, buf, BUFSIZE); 
+                    //////////////////////////////////////////////
+                    //mhash(td, &fileBuf, 1); 
+                    //serverHash = mhash_end(td);
+                    bzero(buf, BUFSIZE); 
+                    //sprintf(buf, "%s", serverHash); 
+                    //printf("%s", serverHash); 
+                    n = write(sockfd, buf, BUFSIZE);// strlen(serverHash)); 
+                    if(n<0) error("error sending!"); 
+                    bzero(buf, BUFSIZE); 
+                    n = read(sockfd, buf, BUFSIZE); 
+                    if(n<0) error("error reading!"); 
+                    printf("%s\n", buf);
+                    bzero(buf, BUFSIZE); 
             }
         }else if (strcmp(buf, "DEL")==0){
             //receive confirmation
             bzero(buf, BUFSIZE); 
             n = read(sockfd, buf, BUFSIZE); 
+            printf("recieved :: %s ",buf);
             if (strcmp(buf, "1") == 0){
                 bzero(buf, BUFSIZE); 
                 printf("confirm deletion: Yes or No\n"); 
@@ -212,8 +228,7 @@ int main(int argc, char *argv[]) {
                 exit(1); 
             }     
 
-            int filelen; 
-            FILE *fp; 
+            int filelen;  
             char finalBuf[BUFSIZE];  
             int rounds; 
             bzero(buf, BUFSIZE);
@@ -222,12 +237,12 @@ int main(int argc, char *argv[]) {
             if(td == MHASH_FAILED) return 1; 
 
             //SEND ACK TO CLIENT
-            strcat(buf, "ready"); 
+            //strcat(buf, "ready"); 
 
-            n = write(sockfd, buf, BUFSIZE); 
-            if (n < 0){
-                error("Error in reading socket3\n"); 
-            }
+            //n = write(sockfd, buf, BUFSIZE); 
+            //if (n < 0){
+            //    error("Error in reading socket3\n"); 
+            //}
             bzero(buf, BUFSIZE); 
 
             //Read filesize
@@ -241,18 +256,52 @@ int main(int argc, char *argv[]) {
             //Loop to read in 4096 bit chunks
             rounds = (filelen + 4095) / 4096; 
             int round_num = 0;
+            printf("\nFile lenght %d\n",filelen);
 
-            for(i=0; i<rounds; i++){
+            
+            FILE *fp = fopen(name, "a"); 
+            int i =0;
+            int total = 0;
+            int sz, last;
+            while((i = read(sockfd, buf, BUFSIZE)) > 0){
+                total += i;
+                printf("total: %d, size: %d\n",total,i);
+                if (total > filelen){
+                    buf[filelen-(total-i)] = '\0';
+                    last = filelen-(total-i);
+                    printf("total: %d, size: %d, last size: %d\n",total,i,last);
+                    printf("buf is %s\n",buf);
+                    sz = fwrite(buf, sizeof(char),last,fp);
+                    break;
+                    }
+                    
+                sz = fwrite(buf, sizeof(char),i,fp);
+                bzero(buf, BUFSIZE);
+                if (total  >= filelen) break;   
+            }
+            fclose(fp);
+            /*
+            while( i<filelen){
+                bzero(buf,BUFSIZE);
                 n = read(sockfd, buf, BUFSIZE); 
                 if(n<0){
                     error("error writing"); 
-                } 
+                }
+                if (! i+n < filelen) buf[n] = '\0';
+
+                buf[4096] = '\0';
                 fp=fopen(name, "a"); 
                 fprintf(fp, buf); 
                 fclose(fp); 
-                strcat(finalBuf, buf); 
+            //    strcat(finalBuf, buf); 
+                //printf("\nbuf:: %s\n",buf);
                 bzero(buf, BUFSIZE); 
-            }
+                i = i + n;
+                //printf("I == %i\n",i);
+                //printf("N is == %d\n",n);
+            }*/
+
+
             if(gettimeofday(&end_t, NULL)==-1){
                 error("Timing Error!\n"); 
                 exit(1);
@@ -260,7 +309,7 @@ int main(int argc, char *argv[]) {
             double throughput = (end_t.tv_usec - start_t.tv_usec); 
 
             n = read(sockfd, buf, BUFSIZE);  
-            mhash(td, &finalBuf, 1); 
+            //mhash(td, &finalBuf, 1); 
             serverHash = mhash_end(td); 
 
             bzero(buf, BUFSIZE); 
